@@ -193,7 +193,8 @@ def minkowski_distance(a: dict, b: dict, p: int):
 
     """
     return sum(
-        (abs(a.get(k, 0.0) - b.get(k, 0.0))) ** p for k in set([*a.keys(), *b.keys()])
+        (abs(a.get(k, 0.0) - b.get(k, 0.0))) ** p
+        for k in {*a.keys(), *b.keys()}
     )
 
 
@@ -293,9 +294,7 @@ def sigmoid(x: float):
     """
     if x < -30:
         return 0
-    if x > 30:
-        return 1
-    return 1 / (1 + math.exp(-x))
+    return 1 if x > 30 else 1 / (1 + math.exp(-x))
 
 
 def clamp(x: float, minimum=0.0, maximum=1.0):

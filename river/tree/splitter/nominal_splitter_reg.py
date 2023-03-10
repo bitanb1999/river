@@ -35,19 +35,18 @@ class NominalSplitterReg(Splitter):
     def update(self, att_val, target_val, sample_weight):
         if att_val is None or sample_weight is None:
             return
-        else:
-            try:
-                estimator = self._statistics[att_val]
-            except KeyError:
-                if isinstance(target_val, dict):  # Multi-target case
-                    self._statistics[att_val] = VectorDict(
-                        default_factory=lambda: Var()
-                    )
-                    self._update_estimator = self._update_estimator_multivariate
-                else:
-                    self._statistics[att_val] = Var()
-                estimator = self._statistics[att_val]
-            self._update_estimator(estimator, target_val, sample_weight)
+        try:
+            estimator = self._statistics[att_val]
+        except KeyError:
+            if isinstance(target_val, dict):  # Multi-target case
+                self._statistics[att_val] = VectorDict(
+                    default_factory=lambda: Var()
+                )
+                self._update_estimator = self._update_estimator_multivariate
+            else:
+                self._statistics[att_val] = Var()
+            estimator = self._statistics[att_val]
+        self._update_estimator(estimator, target_val, sample_weight)
 
         return self
 

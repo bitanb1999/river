@@ -50,7 +50,7 @@ def test_union_funcs():
     ]
 
     for i, pipeline in enumerate(pipelines):
-        print(i, str(pipeline))
+        print(i, pipeline)
         assert str(pipeline) == "a + b"
 
 

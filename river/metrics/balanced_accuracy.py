@@ -52,9 +52,6 @@ class BalancedAccuracy(base.MultiClassMetric):
                 continue
         try:
             n_classes = len(self.cm.classes)
-            score = total / n_classes
-
-            return score
-
+            return total / n_classes
         except ZeroDivisionError:
             return 0.0

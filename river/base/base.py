@@ -49,10 +49,7 @@ class Base:
             # **kwargs
             if param.kind == param.VAR_KEYWORD:
                 for k, v in getattr(self, name, {}).items():
-                    if isinstance(v, Base):
-                        params[k] = (v.__class__, v._get_params())
-                    else:
-                        params[k] = v
+                    params[k] = (v.__class__, v._get_params()) if isinstance(v, Base) else v
                 continue
 
             # Keywords parameters
@@ -237,14 +234,14 @@ class Base:
             # self-referential objects
             seen.add(obj_id)
             if isinstance(obj, dict):
-                size += sum([get_size(v, seen) for v in obj.values()])
-                size += sum([get_size(k, seen) for k in obj.keys()])
+                size += sum(get_size(v, seen) for v in obj.values())
+                size += sum(get_size(k, seen) for k in obj.keys())
             elif hasattr(obj, "__dict__"):
                 size += get_size(vars(obj), seen)
             elif hasattr(obj, "__iter__") and not isinstance(
                 obj, (str, bytes, bytearray)
             ):
-                size += sum([get_size(i, seen) for i in obj])
+                size += sum(get_size(i, seen) for i in obj)
             return size
 
         return get_size(self)

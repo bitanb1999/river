@@ -88,10 +88,7 @@ class KNNRegressor(BaseNeighbors, base.Regressor):
         )
         if aggregation_method not in {self._MEAN, self._MEDIAN, self._WEIGHTED_MEAN}:
             raise ValueError(
-                "Invalid aggregation_method: {}.\n"
-                "Valid options are: {}".format(
-                    aggregation_method, {self._MEAN, self._MEDIAN, self._WEIGHTED_MEAN}
-                )
+                f"Invalid aggregation_method: {aggregation_method}.\nValid options are: {{self._MEAN, self._MEDIAN, self._WEIGHTED_MEAN}}"
             )
         self.aggregation_method = aggregation_method
         self.kwargs = kwargs

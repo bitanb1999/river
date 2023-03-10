@@ -31,11 +31,10 @@ class ExhaustiveSplitter(Splitter):
     def update(self, att_val, target_val, sample_weight):
         if att_val is None:
             return
+        if self._root is None:
+            self._root = ExhaustiveNode(att_val, target_val, sample_weight)
         else:
-            if self._root is None:
-                self._root = ExhaustiveNode(att_val, target_val, sample_weight)
-            else:
-                self._root.insert_value(att_val, target_val, sample_weight)
+            self._root.insert_value(att_val, target_val, sample_weight)
 
         return self
 
@@ -80,54 +79,42 @@ class ExhaustiveSplitter(Splitter):
         right_dist = {}
 
         if parent_left is None:
-            left_dist.update(
-                dict(Counter(left_dist) + Counter(current_node.class_count_left))
-            )
-            right_dist.update(
-                dict(Counter(right_dist) + Counter(current_node.class_count_right))
+            left_dist |= dict(Counter(left_dist) + Counter(current_node.class_count_left))
+            right_dist |= dict(
+                Counter(right_dist) + Counter(current_node.class_count_right)
             )
         else:
-            left_dist.update(dict(Counter(left_dist) + Counter(parent_left)))
-            right_dist.update(dict(Counter(right_dist) + Counter(parent_right)))
+            left_dist |= dict(Counter(left_dist) + Counter(parent_left))
+            right_dist |= dict(Counter(right_dist) + Counter(parent_right))
 
             if left_child:
                 # get the exact statistics of the parent value
                 exact_parent_dist = {}
-                exact_parent_dist.update(
-                    dict(Counter(exact_parent_dist) + Counter(actual_parent_left))
+                exact_parent_dist |= dict(
+                    Counter(exact_parent_dist) + Counter(actual_parent_left)
                 )
-                exact_parent_dist.update(
-                    dict(
-                        Counter(exact_parent_dist)
-                        - Counter(current_node.class_count_left)
-                    )
+                exact_parent_dist |= dict(
+                    Counter(exact_parent_dist)
+                    - Counter(current_node.class_count_left)
                 )
-                exact_parent_dist.update(
-                    dict(
-                        Counter(exact_parent_dist)
-                        - Counter(current_node.class_count_right)
-                    )
+                exact_parent_dist |= dict(
+                    Counter(exact_parent_dist)
+                    - Counter(current_node.class_count_right)
                 )
 
                 # move the subtrees
-                left_dist.update(
-                    dict(Counter(left_dist) - Counter(current_node.class_count_right))
-                )
-                right_dist.update(
-                    dict(Counter(right_dist) + Counter(current_node.class_count_right))
+                left_dist |= dict(Counter(left_dist) - Counter(current_node.class_count_right))
+                right_dist |= dict(
+                    Counter(right_dist) + Counter(current_node.class_count_right)
                 )
 
                 # move the exact value from the parent
-                right_dist.update(
-                    dict(Counter(right_dist) + Counter(exact_parent_dist))
-                )
-                left_dist.update(dict(Counter(left_dist) - Counter(exact_parent_dist)))
+                right_dist |= dict(Counter(right_dist) + Counter(exact_parent_dist))
+                left_dist |= dict(Counter(left_dist) - Counter(exact_parent_dist))
             else:
-                left_dist.update(
-                    dict(Counter(left_dist) + Counter(current_node.class_count_left))
-                )
-                right_dist.update(
-                    dict(Counter(right_dist) - Counter(current_node.class_count_left))
+                left_dist |= dict(Counter(left_dist) + Counter(current_node.class_count_left))
+                right_dist |= dict(
+                    Counter(right_dist) - Counter(current_node.class_count_left)
                 )
 
         post_split_dists = [left_dist, right_dist]

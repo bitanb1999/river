@@ -240,9 +240,7 @@ def print_docstring(obj, file, depth):
         if param.default is not param.empty:
             printf(f" – defaults to `{param.default}`", end="")
         printf("\n", file=file)
-        # Description
-        desc = params_desc[param.name]
-        if desc:
+        if desc := params_desc[param.name]:
             printf(f"    {desc}\n")
     printf("")
 
@@ -256,9 +254,7 @@ def print_docstring(obj, file, depth):
         if attr.type:
             printf(f" (*{attr.type}*)", end="")
         printf("\n", file=file)
-        # Description
-        desc = " ".join(attr.desc)
-        if desc:
+        if desc := " ".join(attr.desc):
             printf(f"    {desc}\n")
     printf("")
 
@@ -335,9 +331,7 @@ def print_docstring(obj, file, depth):
                 if param.default is not param.empty:
                     printf_indent(f" – defaults to `{param.default}`", end="")
                 printf_indent("", file=file)
-                # Description
-                desc = params_desc.get(param.name)
-                if desc:
+                if desc := params_desc.get(param.name):
                     printf_indent(f"    {desc}")
             printf_indent("")
 

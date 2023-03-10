@@ -131,7 +131,7 @@ class AdaSplitNodeRegressor(SplitNode, AdaNode):
     """
 
     def __init__(self, split_test, stats, depth, adwin_delta, seed, **kwargs):
-        stats = stats if stats else Var()
+        stats = stats or Var()
         super().__init__(split_test, stats, depth, **kwargs)
         self.adwin_delta = adwin_delta
         self._adwin = ADWIN(delta=self.adwin_delta)
@@ -145,12 +145,11 @@ class AdaSplitNodeRegressor(SplitNode, AdaNode):
 
     @property
     def n_leaves(self):
-        num_of_leaves = 0
-        for child in self._children.values():
-            if child is not None:
-                num_of_leaves += child.n_leaves  # noqa
-
-        return num_of_leaves
+        return sum(
+            child.n_leaves
+            for child in self._children.values()
+            if child is not None
+        )
 
     @property
     def error_estimation(self):
@@ -158,11 +157,7 @@ class AdaSplitNodeRegressor(SplitNode, AdaNode):
 
     @property
     def error_width(self):
-        w = 0.0
-        if not self.error_is_null():
-            w = self._adwin.width
-
-        return w
+        return 0.0 if self.error_is_null() else self._adwin.width
 
     def error_is_null(self):
         return self._adwin is None
@@ -322,11 +317,10 @@ class AdaSplitNodeRegressor(SplitNode, AdaNode):
                     # Recursive delete of SplitNodes
                     child.kill_tree_children(tree)  # noqa
                     tree._n_decision_nodes -= 1
+                elif child.is_active():  # noqa
+                    tree._n_active_leaves -= 1
                 else:
-                    if child.is_active():  # noqa
-                        tree._n_active_leaves -= 1
-                    else:
-                        tree._n_inactive_leaves -= 1
+                    tree._n_inactive_leaves -= 1
 
                 self._children[child_id] = None
 

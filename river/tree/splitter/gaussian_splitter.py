@@ -32,20 +32,19 @@ class GaussianSplitter(Splitter):
     def update(self, att_val, target_val, sample_weight):
         if att_val is None:
             return
-        else:
-            try:
-                val_dist = self._att_dist_per_class[target_val]
-                if att_val < self._min_per_class[target_val]:
-                    self._min_per_class[target_val] = att_val
-                if att_val > self._max_per_class[target_val]:
-                    self._max_per_class[target_val] = att_val
-            except KeyError:
-                val_dist = Gaussian()
-                self._att_dist_per_class[target_val] = val_dist
+        try:
+            val_dist = self._att_dist_per_class[target_val]
+            if att_val < self._min_per_class[target_val]:
                 self._min_per_class[target_val] = att_val
+            if att_val > self._max_per_class[target_val]:
                 self._max_per_class[target_val] = att_val
+        except KeyError:
+            val_dist = Gaussian()
+            self._att_dist_per_class[target_val] = val_dist
+            self._min_per_class[target_val] = att_val
+            self._max_per_class[target_val] = att_val
 
-            val_dist.update(att_val, sample_weight)
+        val_dist.update(att_val, sample_weight)
 
         return self
 

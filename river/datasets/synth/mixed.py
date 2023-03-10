@@ -124,14 +124,13 @@ class Mixed(base.SyntheticDataset):
 
                 if not self.balance_classes:
                     desired_class_found = True
-                else:
-                    if (self.next_class_should_be_zero and (y == 0)) or (
+                elif (self.next_class_should_be_zero and (y == 0)) or (
                         (not self.next_class_should_be_zero) and (y == 1)
                     ):
-                        desired_class_found = True
-                        self.next_class_should_be_zero = (
-                            not self.next_class_should_be_zero
-                        )
+                    desired_class_found = True
+                    self.next_class_should_be_zero = (
+                        not self.next_class_should_be_zero
+                    )
 
             x = {0: att_0, 1: att_1, 2: att_2, 3: att_3}
 

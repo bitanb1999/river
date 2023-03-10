@@ -469,9 +469,7 @@ class Pipeline(base.Estimator):
         _print = functools.partial(print, file=buffer)
 
         def format_value(x):
-            if isinstance(x, float):
-                return "{:,.{prec}f}".format(x, prec=n_decimals)
-            return x
+            return "{:,.{prec}f}".format(x, prec=n_decimals) if isinstance(x, float) else x
 
         def print_dict(x, show_types, indent=False, space_after=True):
 

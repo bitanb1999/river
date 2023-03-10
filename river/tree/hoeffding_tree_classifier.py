@@ -137,13 +137,13 @@ class HoeffdingTreeClassifier(HoeffdingTree, base.Classifier):
 
         if splitter is None:
             self.splitter = GaussianSplitter()
-        else:
-            if not splitter.is_target_class:
-                raise ValueError(
-                    "The chosen splitter cannot be used in classification tasks."
-                )
+        elif splitter.is_target_class:
             self.splitter = splitter
 
+        else:
+            raise ValueError(
+                "The chosen splitter cannot be used in classification tasks."
+            )
         self.kwargs = kwargs
 
         # To keep track of the observed classes
@@ -157,9 +157,7 @@ class HoeffdingTreeClassifier(HoeffdingTree, base.Classifier):
             self._HELLINGER,
         ]:
             print(
-                "Invalid split_criterion option {}', will use default '{}'".format(
-                    split_criterion, self._INFO_GAIN_SPLIT
-                )
+                f"Invalid split_criterion option {split_criterion}', will use default '{self._INFO_GAIN_SPLIT}'"
             )
             self._split_criterion = self._INFO_GAIN_SPLIT
         else:
@@ -173,9 +171,7 @@ class HoeffdingTreeClassifier(HoeffdingTree, base.Classifier):
             self._NAIVE_BAYES_ADAPTIVE,
         ]:
             print(
-                "Invalid leaf_prediction option {}', will use default '{}'".format(
-                    leaf_prediction, self._NAIVE_BAYES_ADAPTIVE
-                )
+                f"Invalid leaf_prediction option {leaf_prediction}', will use default '{self._NAIVE_BAYES_ADAPTIVE}'"
             )
             self._leaf_prediction = self._NAIVE_BAYES_ADAPTIVE
         else:
@@ -184,11 +180,7 @@ class HoeffdingTreeClassifier(HoeffdingTree, base.Classifier):
     def _new_learning_node(self, initial_stats=None, parent=None):
         if initial_stats is None:
             initial_stats = {}
-        if parent is None:
-            depth = 0
-        else:
-            depth = parent.depth + 1
-
+        depth = 0 if parent is None else parent.depth + 1
         if self._leaf_prediction == self._MAJORITY_CLASS:
             return LearningNodeMC(initial_stats, depth, self.splitter)
         elif self._leaf_prediction == self._NAIVE_BAYES:
@@ -219,79 +211,79 @@ class HoeffdingTreeClassifier(HoeffdingTree, base.Classifier):
         parent_idx
             Parent node's branch index.
         """
-        if not node.observed_class_distribution_is_pure():  # noqa
-            if self._split_criterion == self._GINI_SPLIT:
-                split_criterion = GiniSplitCriterion()
-            elif self._split_criterion == self._INFO_GAIN_SPLIT:
-                split_criterion = InfoGainSplitCriterion()
-            elif self._split_criterion == self._HELLINGER:
-                split_criterion = HellingerDistanceCriterion()
-            else:
-                split_criterion = InfoGainSplitCriterion()
-            best_split_suggestions = node.best_split_suggestions(split_criterion, self)
-            best_split_suggestions.sort(key=attrgetter("merit"))
-            should_split = False
-            if len(best_split_suggestions) < 2:
-                should_split = len(best_split_suggestions) > 0
-            else:
-                hoeffding_bound = self._hoeffding_bound(
-                    split_criterion.range_of_merit(node.stats),
-                    self.split_confidence,
-                    node.total_weight,
-                )
-                best_suggestion = best_split_suggestions[-1]
-                second_best_suggestion = best_split_suggestions[-2]
-                if (
-                    best_suggestion.merit - second_best_suggestion.merit
-                    > hoeffding_bound
-                    or hoeffding_bound < self.tie_threshold
-                ):
-                    should_split = True
-                if self.remove_poor_attrs:
-                    poor_atts = set()
+        if node.observed_class_distribution_is_pure():
+            return
+        if self._split_criterion == self._GINI_SPLIT:
+            split_criterion = GiniSplitCriterion()
+        elif (
+            self._split_criterion == self._INFO_GAIN_SPLIT
+            or self._split_criterion != self._HELLINGER
+        ):
+            split_criterion = InfoGainSplitCriterion()
+        else:
+            split_criterion = HellingerDistanceCriterion()
+        best_split_suggestions = node.best_split_suggestions(split_criterion, self)
+        best_split_suggestions.sort(key=attrgetter("merit"))
+        should_split = False
+        if len(best_split_suggestions) < 2:
+            should_split = len(best_split_suggestions) > 0
+        else:
+            hoeffding_bound = self._hoeffding_bound(
+                split_criterion.range_of_merit(node.stats),
+                self.split_confidence,
+                node.total_weight,
+            )
+            best_suggestion = best_split_suggestions[-1]
+            second_best_suggestion = best_split_suggestions[-2]
+            if (
+                best_suggestion.merit - second_best_suggestion.merit
+                > hoeffding_bound
+                or hoeffding_bound < self.tie_threshold
+            ):
+                should_split = True
+            if self.remove_poor_attrs:
+                poor_atts = set()
                     # Add any poor attribute to set
-                    for i in range(len(best_split_suggestions)):
-                        if best_split_suggestions[i] is not None:
-                            split_atts = best_split_suggestions[
-                                i
-                            ].split_test.attrs_test_depends_on()
-                            if len(split_atts) == 1:
-                                if (
-                                    best_suggestion.merit
-                                    - best_split_suggestions[i].merit
-                                    > hoeffding_bound
-                                ):
-                                    poor_atts.add(split_atts[0])
-                    for poor_att in poor_atts:
-                        node.disable_attribute(poor_att)
-            if should_split:
-                split_decision = best_split_suggestions[-1]
-                if split_decision.split_test is None:
-                    # Pre-pruning - null wins
-                    node.deactivate()
-                    self._n_inactive_leaves += 1
-                    self._n_active_leaves -= 1
-                else:
-                    new_split = self._new_split_node(
-                        split_decision.split_test, node.stats, node.depth
+                for i in range(len(best_split_suggestions)):
+                    if best_split_suggestions[i] is not None:
+                        split_atts = best_split_suggestions[
+                            i
+                        ].split_test.attrs_test_depends_on()
+                        if len(split_atts) == 1 and (
+                            best_suggestion.merit - best_split_suggestions[i].merit
+                            > hoeffding_bound
+                        ):
+                            poor_atts.add(split_atts[0])
+                for poor_att in poor_atts:
+                    node.disable_attribute(poor_att)
+        if should_split:
+            split_decision = best_split_suggestions[-1]
+            if split_decision.split_test is None:
+                # Pre-pruning - null wins
+                node.deactivate()
+                self._n_inactive_leaves += 1
+                self._n_active_leaves -= 1
+            else:
+                new_split = self._new_split_node(
+                    split_decision.split_test, node.stats, node.depth
+                )
+
+                for i in range(split_decision.num_splits()):
+                    new_child = self._new_learning_node(
+                        split_decision.resulting_stats_from_split(i),
+                        parent=new_split,
                     )
+                    new_split.set_child(i, new_child)
+                self._n_active_leaves -= 1
+                self._n_decision_nodes += 1
+                self._n_active_leaves += split_decision.num_splits()
+                if parent is None:
+                    self._tree_root = new_split
+                else:
+                    parent.set_child(parent_idx, new_split)
 
-                    for i in range(split_decision.num_splits()):
-                        new_child = self._new_learning_node(
-                            split_decision.resulting_stats_from_split(i),
-                            parent=new_split,
-                        )
-                        new_split.set_child(i, new_child)
-                    self._n_active_leaves -= 1
-                    self._n_decision_nodes += 1
-                    self._n_active_leaves += split_decision.num_splits()
-                    if parent is None:
-                        self._tree_root = new_split
-                    else:
-                        parent.set_child(parent_idx, new_split)
-
-                # Manage memory
-                self._enforce_size_limit()
+            # Manage memory
+            self._enforce_size_limit()
 
     def learn_one(self, x, y, *, sample_weight=1.0):
         """Train the model on instance x and corresponding target y.
@@ -409,7 +401,7 @@ class HoeffdingTreeClassifier(HoeffdingTree, base.Classifier):
                 node = found_node.parent
 
             if node.is_leaf():
-                proba.update(node.leaf_prediction(x, tree=self))
+                proba |= node.leaf_prediction(x, tree=self)
             else:  # Corner case where a decision node is reached
                 proba.update(normalize_values_in_dict(node.stats, inplace=False))
         return proba

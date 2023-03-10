@@ -22,11 +22,7 @@ def get_dimensions(X) -> tuple:
     """
     r, c = 1, 1
     if isinstance(X, type(np.array([0]))):
-        if X.ndim > 1:
-            r, c = X.shape
-        else:
-            r, c = 1, X.size
-
+        r, c = X.shape if X.ndim > 1 else (1, X.size)
     elif isinstance(X, type([])):
         if isinstance(X[0], type([])):
             r, c = len(X), len(X[0])
@@ -156,14 +152,12 @@ def calculate_object_size(obj, unit="byte") -> int:
             for i in obj:
                 to_visit.append(i)
 
-    if unit == "kB":
-        final_size = byte_size / 1024
-    elif unit == "MB":
-        final_size = byte_size / (2 ** 20)
+    if unit == "MB":
+        return byte_size / (2 ** 20)
+    elif unit == "kB":
+        return byte_size / 1024
     else:
-        final_size = byte_size
-
-    return final_size
+        return byte_size
 
 
 def is_scalar_nan(x) -> bool:
@@ -218,11 +212,7 @@ def add_dict_values(dict_a: dict, dict_b: dict, inplace=False) -> dict:
     `dict_a` or a new dictionary depending on parameter `inplace`.
 
     """
-    if inplace:
-        result = dict_a
-    else:
-        result = copy.deepcopy(dict_a)
-
+    result = dict_a if inplace else copy.deepcopy(dict_a)
     for k, v in dict_b.items():
         try:
             result[k] += v
@@ -249,9 +239,7 @@ def add_delay_to_timestamps(timestamps, delay):
 
     """
 
-    delay_timestamps = []
-    for t in timestamps:
-        delay_timestamps.append(t + delay)
+    delay_timestamps = [t + delay for t in timestamps]
     return np.array(delay_timestamps, dtype="datetime64")
 
 

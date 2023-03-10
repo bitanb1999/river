@@ -35,10 +35,11 @@ def make_coeffs(d, m):
         f = math.factorial
         return f(n) // f(k) // f(n - k)
 
-    return dict(
-        (k * m - 1, int(math.copysign(1, (k + 1) % 2 - 1)) * n_choose_k(n=d, k=k))
+    return {
+        k * m
+        - 1: int(math.copysign(1, (k + 1) % 2 - 1)) * n_choose_k(n=d, k=k)
         for k in range(1, d + 1)
-    )
+    }
 
 
 class Differencer:

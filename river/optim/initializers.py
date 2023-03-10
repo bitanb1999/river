@@ -110,6 +110,4 @@ class Normal(Initializer):
 
     def __call__(self, shape=1):
         weights = self._rng.normal(loc=self.mu, scale=self.sigma, size=shape)
-        if shape == 1:
-            return weights[0]
-        return weights
+        return weights[0] if shape == 1 else weights

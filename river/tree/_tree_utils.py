@@ -38,10 +38,9 @@ def do_naive_bayes_prediction(x, observed_class_distribution: dict, splitters: d
             continue
 
         if splitters:
-            for att_idx in splitters:
+            for att_idx, obs in splitters.items():
                 if att_idx not in x:
                     continue
-                obs = splitters[att_idx]
                 # Prior plus the log likelihood
                 tmp = obs.cond_proba(x[att_idx], class_index)
                 votes[class_index] += math.log(tmp) if tmp > 0 else 0.0

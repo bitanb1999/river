@@ -117,9 +117,7 @@ class QOSplitter(Splitter):
     @staticmethod
     def _update_candidate(split_point, att_idx, post_split_dists, merit):
         num_att_binary_test = NumericBinaryTest(att_idx, split_point, True)
-        candidate = SplitSuggestion(num_att_binary_test, post_split_dists, merit)
-
-        return candidate
+        return SplitSuggestion(num_att_binary_test, post_split_dists, merit)
 
     @property
     def is_target_class(self) -> bool:

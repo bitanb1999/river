@@ -103,12 +103,13 @@ class OneHotEncoder(base.Transformer):
         return self
 
     def transform_one(self, x, y=None):
-        oh = {}
-
-        # Add 0s
-        if not self.sparse:
-            oh = {f"{i}_{v}": 0 for i, values in self.values.items() for v in values}
-
+        oh = (
+            {}
+            if self.sparse
+            else {
+                f"{i}_{v}": 0 for i, values in self.values.items() for v in values
+            }
+        )
         # Add 1s
         for i, xi in x.items():
             oh[f"{i}_{xi}"] = 1

@@ -60,10 +60,7 @@ class LearningNodeMC(LearningNode):
 
         """
         total_seen = sum(self.stats.values())
-        if total_seen > 0:
-            return total_seen - max(self.stats.values())
-        else:
-            return 0
+        return total_seen - max(self.stats.values()) if total_seen > 0 else 0
 
     def observed_class_distribution_is_pure(self):
         """Check if observed class distribution is pure, i.e. if all samples

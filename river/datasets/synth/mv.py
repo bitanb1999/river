@@ -98,13 +98,12 @@ class Mv(base.SyntheticDataset):
 
             if x[3] == "green":
                 x[4] = x[1] + 2 * x[2]
+            elif choice := rng.choices(population=[True, False], weights=[0.3, 0.7])[
+                0
+            ]:
+                x[4] = x[1] / 2
             else:
-                choice = rng.choices(population=[True, False], weights=[0.3, 0.7])[0]
-
-                if choice:
-                    x[4] = x[1] / 2
-                else:
-                    x[4] = x[2] / 2
+                x[4] = x[2] / 2
 
             x[5] = rng.uniform(-1, 1)
 

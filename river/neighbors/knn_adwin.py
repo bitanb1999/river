@@ -94,9 +94,11 @@ class KNNADWINClassifier(KNNClassifier):
         else:
             self.adwin.update(0)
 
-        if self.data_window.size >= self.n_neighbors:
-            if self.adwin.change_detected:
-                if self.adwin.width < self.data_window.size:
-                    for i in range(self.data_window.size, self.adwin.width, -1):
-                        self.data_window.popleft()
+        if (
+            self.data_window.size >= self.n_neighbors
+            and self.adwin.change_detected
+            and self.adwin.width < self.data_window.size
+        ):
+            for _ in range(self.data_window.size, self.adwin.width, -1):
+                self.data_window.popleft()
         return self

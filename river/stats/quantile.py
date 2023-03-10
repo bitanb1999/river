@@ -72,13 +72,12 @@ class Quantile(base.Univariate):
 
         else:
             for i in range(1, 5):
-                if self.heights[i - 1] <= x and x < self.heights[i]:
+                if self.heights[i - 1] <= x < self.heights[i]:
                     k = i
                     break
             else:
                 k = 4
-                if self.heights[-1] < x:
-                    self.heights[-1] = x
+                self.heights[-1] = max(self.heights[-1], x)
         return k
 
     @classmethod
@@ -99,8 +98,6 @@ class Quantile(base.Univariate):
 
         for i in range(1, 4):
             n = self.position[i]
-            q = self.heights[i]
-
             d = self.marker_position[i] - n
 
             if (d >= 1 and self.position[i + 1] - n > 1) or (
@@ -113,9 +110,11 @@ class Quantile(base.Univariate):
                 np1 = self.position[i + 1]
                 nm1 = self.position[i - 1]
 
+                q = self.heights[i]
+
                 qn = self._compute_P2(qp1, q, qm1, d, np1, n, nm1)
 
-                if qm1 < qn and qn < qp1:
+                if qm1 < qn < qp1:
                     self.heights[i] = qn
                 else:
                     self.heights[i] = q + d * (self.heights[i + d] - q) / (

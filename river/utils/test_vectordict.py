@@ -7,7 +7,7 @@ from river.utils import VectorDict
 def test_vectordict():
 
     # test empty init
-    x = dict()
+    x = {}
     vx = VectorDict()
     assert vx == x
 

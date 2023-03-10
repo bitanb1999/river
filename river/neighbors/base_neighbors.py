@@ -93,9 +93,7 @@ class KNeighborsBuffer:
 
         if self._n_features != get_dimensions(x)[1]:
             raise ValueError(
-                "Inconsistent number of features in X: {}, previously observed {}.".format(
-                    get_dimensions(x)[1], self._n_features
-                )
+                f"Inconsistent number of features in X: {get_dimensions(x)[1]}, previously observed {self._n_features}."
             )
 
         self._X[self._next_insert, :] = x
@@ -120,17 +118,16 @@ class KNeighborsBuffer:
 
     def pop(self) -> typing.Union[typing.Tuple[np.ndarray, base.typing.Target], None]:
         """Remove and return the most recent element added to the buffer. """
-        if self.size > 0:
-            self._next_insert = (
-                self._next_insert - 1 if self._next_insert > 0 else self.window_size - 1
-            )
-            x, y = self._X[self._next_insert], self._y[self._next_insert]
-            self._imask[self._next_insert] = False  # Mark slot as free
-            self._size -= 1
-
-            return x, y
-        else:
+        if self.size <= 0:
             return None
+        self._next_insert = (
+            self._next_insert - 1 if self._next_insert > 0 else self.window_size - 1
+        )
+        x, y = self._X[self._next_insert], self._y[self._next_insert]
+        self._imask[self._next_insert] = False  # Mark slot as free
+        self._size -= 1
+
+        return x, y
 
     def popleft(
         self,
@@ -209,8 +206,7 @@ class BaseNeighbors:
 
         if p < 1:
             raise ValueError(
-                "Invalid Minkowski p-norm value: {}.\n"
-                "Values must be greater than or equal to 1".format(p)
+                f"Invalid Minkowski p-norm value: {p}.\nValues must be greater than or equal to 1"
             )
         self.p = p
         self.data_window = KNeighborsBuffer(window_size=window_size)

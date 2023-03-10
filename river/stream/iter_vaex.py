@@ -35,16 +35,15 @@ def iter_vaex(
 
     multioutput = len(y) > 1
 
-    if multioutput:
-        for i in range(len(X)):
+    for i in range(len(X)):
+        if multioutput:
             yield (
                 {key: X.evaluate(key, i, i + 1)[0] for key in feature_names},
                 {key: X.evaluate(key, i, i + 1)[0] for key in y},
             )
 
-    else:
+        else:
 
-        for i in range(len(X)):
             yield (
                 {key: X.evaluate(key, i, i + 1)[0] for key in feature_names},
                 X.evaluate(y[0], i, i + 1)[0],

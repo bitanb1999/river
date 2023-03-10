@@ -211,35 +211,31 @@ class SAMKNNClassifier(Classifier):
                     self._ltm_samples, self._ltm_labels
                 )
             else:
-                if (
-                    len(self._stm_labels) + len(self._ltm_labels)
-                    > self.max_stm_size + self.max_ltm_size
-                ):
-                    stm_shortened = True
-                    n_shifts = int(self.max_ltm_size - len(self._ltm_labels) + 1)
-                    shift_range = range(n_shifts)
-                    self._ltm_samples = np.vstack(
-                        [self._ltm_samples, self._stm_samples[:n_shifts, :]]
-                    )
-                    self._ltm_labels = np.append(
-                        self._ltm_labels, self._stm_labels[:n_shifts]
-                    )
-                    self._ltm_samples, self._ltm_labels = self._cluster_down(
-                        self._ltm_samples, self._ltm_labels
-                    )
-                    self._stm_samples = np.delete(self._stm_samples, shift_range, 0)
-                    self._stm_labels = np.delete(self._stm_labels, shift_range, 0)
-                    self.stm_distances[
-                        : len(self._stm_labels), : len(self._stm_labels)
-                    ] = self.stm_distances[
-                        n_shifts : len(self._stm_labels) + n_shifts,
-                        n_shifts : len(self._stm_labels) + n_shifts,
-                    ]
-                    for _ in shift_range:
-                        self.ltm_pred_history.popleft()
-                        self.stm_pred_history.popleft()
-                        self.cmp_pred_history.popleft()
-                    self.interleaved_pred_histories = {}
+                stm_shortened = True
+                n_shifts = int(self.max_ltm_size - len(self._ltm_labels) + 1)
+                shift_range = range(n_shifts)
+                self._ltm_samples = np.vstack(
+                    [self._ltm_samples, self._stm_samples[:n_shifts, :]]
+                )
+                self._ltm_labels = np.append(
+                    self._ltm_labels, self._stm_labels[:n_shifts]
+                )
+                self._ltm_samples, self._ltm_labels = self._cluster_down(
+                    self._ltm_samples, self._ltm_labels
+                )
+                self._stm_samples = np.delete(self._stm_samples, shift_range, 0)
+                self._stm_labels = np.delete(self._stm_labels, shift_range, 0)
+                self.stm_distances[
+                    : len(self._stm_labels), : len(self._stm_labels)
+                ] = self.stm_distances[
+                    n_shifts : len(self._stm_labels) + n_shifts,
+                    n_shifts : len(self._stm_labels) + n_shifts,
+                ]
+                for _ in shift_range:
+                    self.ltm_pred_history.popleft()
+                    self.stm_pred_history.popleft()
+                    self.cmp_pred_history.popleft()
+                self.interleaved_pred_histories = {}
         return stm_shortened
 
     def _clean_samples(self, samples_cl, labels_cl, only_last=False):
@@ -369,43 +365,42 @@ class SAMKNNClassifier(Classifier):
         classifier_choice = 0
         if len(self._stm_labels) == 0:
             predicted_label = predicted_label_stm
+        elif len(self._stm_labels) < self.n_neighbors:
+            predicted_label_stm = self.get_labels_fct(
+                distances_stm, self._stm_labels, len(self._stm_labels)
+            )[0]
+            predicted_label = predicted_label_stm
         else:
-            if len(self._stm_labels) < self.n_neighbors:
-                predicted_label_stm = self.get_labels_fct(
-                    distances_stm, self._stm_labels, len(self._stm_labels)
-                )[0]
-                predicted_label = predicted_label_stm
-            else:
-                distances_ltm = SAMKNNClassifier._get_distances(
-                    sample, self._ltm_samples
-                )
-                predicted_label_stm = self.get_labels_fct(
-                    distances_stm, self._stm_labels, self.n_neighbors
-                )[0]
-                predicted_label_both = self.get_labels_fct(
-                    np.append(distances_stm, distances_ltm),
-                    np.append(self._stm_labels, self._ltm_labels),
-                    self.n_neighbors,
-                )[0]
+            distances_ltm = SAMKNNClassifier._get_distances(
+                sample, self._ltm_samples
+            )
+            predicted_label_stm = self.get_labels_fct(
+                distances_stm, self._stm_labels, self.n_neighbors
+            )[0]
+            predicted_label_both = self.get_labels_fct(
+                np.append(distances_stm, distances_ltm),
+                np.append(self._stm_labels, self._ltm_labels),
+                self.n_neighbors,
+            )[0]
 
-                if len(self._ltm_labels) >= self.n_neighbors:  # noqa
-                    predicted_label_ltm = self.get_labels_fct(
-                        distances_ltm, self._ltm_labels, self.n_neighbors
-                    )[0]
-                    correct_ltm = np.sum(self.ltm_pred_history)
-                    correct_stm = np.sum(self.stm_pred_history)
-                    correct_both = np.sum(self.cmp_pred_history)
-                    labels = [
-                        predicted_label_stm,
-                        predicted_label_ltm,
-                        predicted_label_both,
-                    ]
-                    classifier_choice = np.argmax(
-                        [correct_stm, correct_ltm, correct_both]
-                    )
-                    predicted_label = labels[classifier_choice]  # noqa
-                else:
-                    predicted_label = predicted_label_stm
+            if len(self._ltm_labels) >= self.n_neighbors:  # noqa
+                predicted_label_ltm = self.get_labels_fct(
+                    distances_ltm, self._ltm_labels, self.n_neighbors
+                )[0]
+                correct_ltm = np.sum(self.ltm_pred_history)
+                correct_stm = np.sum(self.stm_pred_history)
+                correct_both = np.sum(self.cmp_pred_history)
+                labels = [
+                    predicted_label_stm,
+                    predicted_label_ltm,
+                    predicted_label_both,
+                ]
+                classifier_choice = np.argmax(
+                    [correct_stm, correct_ltm, correct_both]
+                )
+                predicted_label = labels[classifier_choice]  # noqa
+            else:
+                predicted_label = predicted_label_stm
 
         self.classifier_choice.append(classifier_choice)
         self.cmp_pred_history.append(predicted_label_both == label)
@@ -426,59 +421,59 @@ class SAMKNNClassifier(Classifier):
         predicted_label_stm = 0
         if len(self._stm_labels) == 0:
             predicted_label = predicted_label_stm
+        elif len(self._stm_labels) < self.n_neighbors:
+            predicted_label_stm = self.get_labels_fct(
+                distances_stm, self._stm_labels, len(self._stm_labels)
+            )[0]
+            predicted_label = predicted_label_stm
         else:
-            if len(self._stm_labels) < self.n_neighbors:
-                predicted_label_stm = self.get_labels_fct(
-                    distances_stm, self._stm_labels, len(self._stm_labels)
+            distances_ltm = SAMKNNClassifier._get_distances(
+                sample, self._ltm_samples
+            )
+            predicted_label_stm = self.get_labels_fct(
+                distances_stm, self._stm_labels, self.n_neighbors
+            )[0]
+            distances_new = cp.deepcopy(distances_stm)
+            stm_labels_new = cp.deepcopy(self._stm_labels)
+            predicted_label_both = self.get_labels_fct(
+                np.append(distances_new, distances_ltm),
+                np.append(stm_labels_new, self._ltm_labels),
+                self.n_neighbors,
+            )[0]
+            if len(self._ltm_labels) >= self.n_neighbors:  # noqa
+                predicted_label_ltm = self.get_labels_fct(
+                    distances_ltm, self._ltm_labels, self.n_neighbors
                 )[0]
-                predicted_label = predicted_label_stm
-            else:
-                distances_ltm = SAMKNNClassifier._get_distances(
-                    sample, self._ltm_samples
+                correct_ltm = np.sum(self.ltm_pred_history)
+                correct_stm = np.sum(self.stm_pred_history)
+                correct_both = np.sum(self.cmp_pred_history)
+                labels = [
+                    predicted_label_stm,
+                    predicted_label_ltm,
+                    predicted_label_both,
+                ]
+                classifier_choice = np.argmax(
+                    [correct_stm, correct_ltm, correct_both]
                 )
-                predicted_label_stm = self.get_labels_fct(
-                    distances_stm, self._stm_labels, self.n_neighbors
-                )[0]
-                distances_new = cp.deepcopy(distances_stm)
-                stm_labels_new = cp.deepcopy(self._stm_labels)
-                predicted_label_both = self.get_labels_fct(
-                    np.append(distances_new, distances_ltm),
-                    np.append(stm_labels_new, self._ltm_labels),
-                    self.n_neighbors,
-                )[0]
-                if len(self._ltm_labels) >= self.n_neighbors:  # noqa
-                    predicted_label_ltm = self.get_labels_fct(
-                        distances_ltm, self._ltm_labels, self.n_neighbors
-                    )[0]
-                    correct_ltm = np.sum(self.ltm_pred_history)
-                    correct_stm = np.sum(self.stm_pred_history)
-                    correct_both = np.sum(self.cmp_pred_history)
-                    labels = [
-                        predicted_label_stm,
-                        predicted_label_ltm,
-                        predicted_label_both,
-                    ]
-                    classifier_choice = np.argmax(
-                        [correct_stm, correct_ltm, correct_both]
-                    )
-                    predicted_label = labels[classifier_choice]  # noqa
-                else:
-                    predicted_label = predicted_label_stm
+                predicted_label = labels[classifier_choice]  # noqa
+            else:
+                predicted_label = predicted_label_stm
 
         return predicted_label
 
     def _learn_one_by_stm(self, sample, label, distances_stm):
         pass
 
-    def _predict_by_stm(self, sample, label, distances_stm):  # noqa
+    def _predict_by_stm(self, sample, label, distances_stm):    # noqa
         """Predicts the label of a given sample by the STM, only used when use_ltm=False."""
-        predicted_label = 0
         curr_len = len(self._stm_labels)
-        if curr_len > 0:
-            predicted_label = self.get_labels_fct(
+        return (
+            self.get_labels_fct(
                 distances_stm, self._stm_labels, min(self.n_neighbors, curr_len)
             )[0]
-        return predicted_label
+            if curr_len > 0
+            else 0
+        )
 
     def learn_one(self, x, y) -> "Classifier":
         """Update the model with a set of features `x` and a label `y`.
@@ -495,8 +490,8 @@ class SAMKNNClassifier(Classifier):
         self
         """
         x_array = dict2numpy(x)
-        c = len(x_array)
         if self._stm_samples is None:
+            c = len(x_array)
             self._stm_samples = np.empty(shape=(0, c))
             self._ltm_samples = np.empty(shape=(0, c))
 
@@ -506,8 +501,8 @@ class SAMKNNClassifier(Classifier):
 
     def predict_one(self, x: dict):
         x_array = dict2numpy(x)
-        c = len(x_array)
         if self._stm_samples is None:
+            c = len(x_array)
             self._stm_samples = np.empty(shape=(0, c))
             self._ltm_samples = np.empty(shape=(0, c))
 
@@ -523,29 +518,26 @@ class SAMKNNClassifier(Classifier):
 
         nn_indices = libNearestNeighbor.nArgMin(n_neighbors, distances)
 
-        if not isinstance(labels, type(np.array([]))):
-            labels = np.asarray(labels, dtype=np.int8)
-        else:
-            labels = np.int8(labels)
-
-        pred_labels = libNearestNeighbor.mostCommon(labels[nn_indices])
-
-        return pred_labels
+        labels = (
+            np.int8(labels)
+            if isinstance(labels, type(np.array([])))
+            else np.asarray(labels, dtype=np.int8)
+        )
+        return libNearestNeighbor.mostCommon(labels[nn_indices])
 
     @staticmethod
     def _get_distance_weighted_label(distances, labels, n_neighbors):
         """Returns the the distance weighted label of the k nearest neighbors."""
         nn_indices = libNearestNeighbor.nArgMin(n_neighbors, distances)
         sqrtDistances = np.sqrt(distances[nn_indices])
-        if not isinstance(labels, type(np.array([]))):
-            labels = np.asarray(labels, dtype=np.int8)
-        else:
-            labels = np.int8(labels)
-
-        predLabels = libNearestNeighbor.getLinearWeightedLabels(
+        labels = (
+            np.int8(labels)
+            if isinstance(labels, type(np.array([])))
+            else np.asarray(labels, dtype=np.int8)
+        )
+        return libNearestNeighbor.getLinearWeightedLabels(
             labels[nn_indices], sqrtDistances
         )
-        return predLabels
 
     @property
     def STMSamples(self):  # noqa
@@ -592,7 +584,7 @@ class STMSizer:
                 distances_stm,
                 min_size=min_stm_size,
             )
-        elif aprox_adaption_strategy is not None and not aprox_adaption_strategy:
+        elif aprox_adaption_strategy is not None:
             "Use exact interleaved test-train error"
             return STMSizer._get_max_acc_window_size(
                 labels,
@@ -602,11 +594,9 @@ class STMSizer:
                 distances_stm,
                 min_size=min_stm_size,
             )
-        elif aprox_adaption_strategy is None:
+        else:
             "No stm adaption"
             return len(labels), prediction_histories
-        else:
-            raise Exception(f"Invalid adaption_strategy: {aprox_adaption_strategy}")
 
     @staticmethod
     def _acc_score(y_pred, y_true):
@@ -650,7 +640,7 @@ class STMSizer:
         Removes predictions of the largest window size and shifts
         the remaining ones accordingly.
         """
-        for i in range(n_deletions):
+        for _ in range(n_deletions):
             sortedKeys = np.sort(list(prediction_histories.keys()))
             prediction_histories.pop(sortedKeys[0], None)
             delta = sortedKeys[1]
@@ -676,52 +666,50 @@ class STMSizer:
         n_samples = len(labels)
         if n_samples < 2 * min_size:
             return n_samples, prediction_histories
-        else:
-            numSamplesRange = [n_samples]
-            while numSamplesRange[-1] / 2 >= min_size:
-                numSamplesRange.append(numSamplesRange[-1] / 2)
+        numSamplesRange = [n_samples]
+        while numSamplesRange[-1] / 2 >= min_size:
+            numSamplesRange.append(numSamplesRange[-1] / 2)
 
-            accuracies = []
-            keys_to_remove = []
-            for key in prediction_histories.keys():
-                if key not in (n_samples - np.array(numSamplesRange)):
-                    keys_to_remove.append(key)
-            for key in keys_to_remove:
-                prediction_histories.pop(key, None)
+        accuracies = []
+        keys_to_remove = [
+            key
+            for key in prediction_histories.keys()
+            if key not in (n_samples - np.array(numSamplesRange))
+        ]
+        for key in keys_to_remove:
+            prediction_histories.pop(key, None)
 
-            for numSamplesIt in numSamplesRange:
-                idx = int(n_samples - numSamplesIt)
-                keyset = list(prediction_histories.keys())
+        for numSamplesIt in numSamplesRange:
+            idx = int(n_samples - numSamplesIt)
+            keyset = list(prediction_histories.keys())
                 # if predictionHistories.has_key(idx):
-                if idx in keyset:
-                    (
-                        accuracy,
-                        predHistory,
-                    ) = STMSizer._get_interleaved_test_train_acc_pred_history(
-                        labels[idx:],
-                        n_neighbours,
-                        get_labels_fct,
-                        prediction_histories[idx],
-                        distances_stm[idx:, idx:],
-                    )
-                else:
-                    accuracy, predHistory = STMSizer._get_interleaved_test_train_acc(
-                        labels[idx:],
-                        n_neighbours,
-                        get_labels_fct,
-                        distances_stm[idx:, idx:],
-                    )
-                prediction_histories[idx] = predHistory
-                accuracies.append(accuracy)
-            accuracies = np.round(accuracies, decimals=4)
-            best_n_train_idx = np.argmax(accuracies)
-            window_size = numSamplesRange[best_n_train_idx]  # noqa
-
-            if window_size < n_samples:
-                prediction_histories = STMSizer._adapt_histories(
-                    best_n_train_idx, prediction_histories
+            accuracy, predHistory = (
+                STMSizer._get_interleaved_test_train_acc_pred_history(
+                    labels[idx:],
+                    n_neighbours,
+                    get_labels_fct,
+                    prediction_histories[idx],
+                    distances_stm[idx:, idx:],
                 )
-            return int(window_size), prediction_histories
+                if idx in keyset
+                else STMSizer._get_interleaved_test_train_acc(
+                    labels[idx:],
+                    n_neighbours,
+                    get_labels_fct,
+                    distances_stm[idx:, idx:],
+                )
+            )
+            prediction_histories[idx] = predHistory
+            accuracies.append(accuracy)
+        accuracies = np.round(accuracies, decimals=4)
+        best_n_train_idx = np.argmax(accuracies)
+        window_size = numSamplesRange[best_n_train_idx]  # noqa
+
+        if window_size < n_samples:
+            prediction_histories = STMSizer._adapt_histories(
+                best_n_train_idx, prediction_histories
+            )
+        return int(window_size), prediction_histories
 
     @staticmethod
     def _get_max_acc_approx_window_size(
@@ -739,70 +727,69 @@ class STMSizer:
         n_samples = len(labels)
         if n_samples < 2 * min_size:
             return n_samples, prediction_histories
-        else:
-            n_samples_range = [n_samples]
-            while n_samples_range[-1] / 2 >= min_size:
-                n_samples_range.append(n_samples_range[-1] / 2)
-            accuracies = []
-            for numSamplesIt in n_samples_range:
-                idx = int(n_samples - numSamplesIt)
-                keyset = list(prediction_histories.keys())
-                # if predictionHistories.has_key(idx):
-                if idx in keyset:
-                    (
-                        accuracy,
-                        predHistory,
-                    ) = STMSizer._get_interleaved_test_train_acc_pred_history(
-                        labels[idx:],
-                        n_neighbours,
-                        get_labels_fct,
-                        prediction_histories[idx],
-                        distances_stm[idx:, idx:],
-                    )
-                # elif predictionHistories.has_key(idx-1):
-                elif idx - 1 in keyset:
-                    predHistory = prediction_histories[idx - 1]
-                    prediction_histories.pop(idx - 1, None)
-                    predHistory.pop(0)
-                    (
-                        accuracy,
-                        predHistory,
-                    ) = STMSizer._get_interleaved_test_train_acc_pred_history(
-                        labels[idx:],
-                        n_neighbours,
-                        get_labels_fct,
-                        predHistory,
-                        distances_stm[idx:, idx:],
-                    )
-                else:
-                    accuracy, predHistory = STMSizer._get_interleaved_test_train_acc(
-                        labels[idx:],
-                        n_neighbours,
-                        get_labels_fct,
-                        distances_stm[idx:, idx:],
-                    )
+        n_samples_range = [n_samples]
+        while n_samples_range[-1] / 2 >= min_size:
+            n_samples_range.append(n_samples_range[-1] / 2)
+        accuracies = []
+        for numSamplesIt in n_samples_range:
+            idx = int(n_samples - numSamplesIt)
+            keyset = list(prediction_histories.keys())
+            # if predictionHistories.has_key(idx):
+            if idx in keyset:
+                (
+                    accuracy,
+                    predHistory,
+                ) = STMSizer._get_interleaved_test_train_acc_pred_history(
+                    labels[idx:],
+                    n_neighbours,
+                    get_labels_fct,
+                    prediction_histories[idx],
+                    distances_stm[idx:, idx:],
+                )
+            # elif predictionHistories.has_key(idx-1):
+            elif idx - 1 in keyset:
+                predHistory = prediction_histories[idx - 1]
+                prediction_histories.pop(idx - 1, None)
+                predHistory.pop(0)
+                (
+                    accuracy,
+                    predHistory,
+                ) = STMSizer._get_interleaved_test_train_acc_pred_history(
+                    labels[idx:],
+                    n_neighbours,
+                    get_labels_fct,
+                    predHistory,
+                    distances_stm[idx:, idx:],
+                )
+            else:
+                accuracy, predHistory = STMSizer._get_interleaved_test_train_acc(
+                    labels[idx:],
+                    n_neighbours,
+                    get_labels_fct,
+                    distances_stm[idx:, idx:],
+                )
+            prediction_histories[idx] = predHistory
+            accuracies.append(accuracy)
+        accuracies = np.round(accuracies, decimals=4)
+        best_n_train_idx = np.argmax(accuracies)
+        if best_n_train_idx > 0:
+            moreAccurateIndices = np.where(accuracies > accuracies[0])[0]
+            for i in moreAccurateIndices:
+                idx = int(n_samples - n_samples_range[i])
+                accuracy, predHistory = STMSizer._get_interleaved_test_train_acc(
+                    labels[idx:],
+                    n_neighbours,
+                    get_labels_fct,
+                    distances_stm[idx:, idx:],
+                )
                 prediction_histories[idx] = predHistory
-                accuracies.append(accuracy)
+                accuracies[i] = accuracy
             accuracies = np.round(accuracies, decimals=4)
             best_n_train_idx = np.argmax(accuracies)
-            if best_n_train_idx > 0:
-                moreAccurateIndices = np.where(accuracies > accuracies[0])[0]
-                for i in moreAccurateIndices:
-                    idx = int(n_samples - n_samples_range[i])
-                    accuracy, predHistory = STMSizer._get_interleaved_test_train_acc(
-                        labels[idx:],
-                        n_neighbours,
-                        get_labels_fct,
-                        distances_stm[idx:, idx:],
-                    )
-                    prediction_histories[idx] = predHistory
-                    accuracies[i] = accuracy
-                accuracies = np.round(accuracies, decimals=4)
-                best_n_train_idx = np.argmax(accuracies)
-            window_size = n_samples_range[best_n_train_idx]  # noqa
+        window_size = n_samples_range[best_n_train_idx]  # noqa
 
-            if window_size < n_samples:
-                prediction_histories = STMSizer._adapt_histories(
-                    best_n_train_idx, prediction_histories
-                )
-            return int(window_size), prediction_histories
+        if window_size < n_samples:
+            prediction_histories = STMSizer._adapt_histories(
+                best_n_train_idx, prediction_histories
+            )
+        return int(window_size), prediction_histories

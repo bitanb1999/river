@@ -189,7 +189,9 @@ class AdaSplitNodeClassifier(SplitNode, AdaNode):
     @property
     def n_leaves(self):
         return sum(
-            [child.n_leaves for child in self._children.values() if child is not None]
+            child.n_leaves
+            for child in self._children.values()
+            if child is not None
         )
 
     @property
@@ -198,11 +200,7 @@ class AdaSplitNodeClassifier(SplitNode, AdaNode):
 
     @property
     def error_width(self):
-        w = 0.0
-        if not self.error_is_null():
-            w = self._adwin.width
-
-        return w
+        return 0.0 if self.error_is_null() else self._adwin.width
 
     def error_is_null(self):
         return self._adwin is None
@@ -364,11 +362,10 @@ class AdaSplitNodeClassifier(SplitNode, AdaNode):
                     # Recursive delete of SplitNodes
                     child.kill_tree_children(tree)  # noqa
                     tree._n_decision_nodes -= 1
+                elif child.is_active():  # noqa
+                    tree._n_active_leaves -= 1
                 else:
-                    if child.is_active():  # noqa
-                        tree._n_active_leaves -= 1
-                    else:
-                        tree._n_inactive_leaves -= 1
+                    tree._n_inactive_leaves -= 1
 
                 self._children[child_id] = None
 

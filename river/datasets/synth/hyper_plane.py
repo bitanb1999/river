@@ -118,7 +118,7 @@ class Hyperplane(base.SyntheticDataset):
         self._change_direction[: self.n_drift_features] = 1
 
         while True:
-            x = dict()
+            x = {}
 
             sum_weights = np.sum(self._weights)
             sum_value = 0

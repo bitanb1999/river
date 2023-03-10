@@ -322,24 +322,23 @@ class FriedmanDrift(Friedman):
                     + 10 * x[0]
                     + 5 * x[2]
                 )
-        elif index >= self._change_point2:
-            if index < self._change_point2 + self.transition_window and bool(
+        elif index < self._change_point2 + self.transition_window and bool(
                 rc.getrandbits(1)
             ):
-                # First new function
-                return (
-                    10 * math.sin(math.pi * x[3] * x[4])
-                    + 20 * (x[1] - 0.5) ** 2
-                    + 10 * x[0]
-                    + 5 * x[2]
-                )
-            else:  # Second new function
-                return (
-                    10 * math.sin(math.pi * x[1] * x[4])
-                    + 20 * (x[3] - 0.5) ** 2
-                    + 10 * x[2]
-                    + 5 * x[0]
-                )
+            # First new function
+            return (
+                10 * math.sin(math.pi * x[3] * x[4])
+                + 20 * (x[1] - 0.5) ** 2
+                + 10 * x[0]
+                + 5 * x[2]
+            )
+        else:  # Second new function
+            return (
+                10 * math.sin(math.pi * x[1] * x[4])
+                + 20 * (x[3] - 0.5) ** 2
+                + 10 * x[2]
+                + 5 * x[0]
+            )
 
     def __iter__(self):
         rng = random.Random(self.seed)

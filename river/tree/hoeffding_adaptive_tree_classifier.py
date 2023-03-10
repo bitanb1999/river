@@ -198,11 +198,7 @@ class HoeffdingAdaptiveTreeClassifier(HoeffdingTreeClassifier):
         return nodes
 
     def _new_learning_node(self, initial_stats=None, parent=None):
-        if parent is not None:
-            depth = parent.depth + 1
-        else:
-            depth = 0
-
+        depth = parent.depth + 1 if parent is not None else 0
         return AdaLearningNodeClassifier(
             stats=initial_stats,
             depth=depth,

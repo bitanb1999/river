@@ -61,7 +61,7 @@ class Estimator(base.Base, abc.ABC):
         return tags
 
     @classmethod
-    def _unit_test_params(self):
+    def _unit_test_params(cls):
         """Indicates which parameters to use during unit testing.
 
         Most estimators have a default value for each of their parameters. However, in some cases,

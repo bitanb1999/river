@@ -56,9 +56,7 @@ def find_ngrams(tokens: typing.List[str], n: int) -> typing.Iterator[N_GRAM]:
     []
 
     """
-    if n == 1:
-        return iter(tokens)
-    return zip(*[tokens[i:] for i in range(n)])
+    return iter(tokens) if n == 1 else zip(*[tokens[i:] for i in range(n)])
 
 
 def find_all_ngrams(
@@ -163,9 +161,7 @@ class VectorizerMixin:
         return x
 
     def _more_tags(self):
-        if self.on is None:
-            return {base.tags.TEXT_INPUT}
-        return {}
+        return {base.tags.TEXT_INPUT} if self.on is None else {}
 
 
 class BagOfWords(base.Transformer, VectorizerMixin):

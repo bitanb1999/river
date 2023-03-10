@@ -120,18 +120,18 @@ class HoeffdingTreeRegressor(HoeffdingTree, base.Regressor):
         self.split_confidence = split_confidence
         self.tie_threshold = tie_threshold
         self.leaf_prediction = leaf_prediction
-        self.leaf_model = leaf_model if leaf_model else linear_model.LinearRegression()
+        self.leaf_model = leaf_model or linear_model.LinearRegression()
         self.model_selector_decay = model_selector_decay
         self.nominal_attributes = nominal_attributes
         self.min_samples_split = min_samples_split
 
         if splitter is None:
             self.splitter = EBSTSplitter()
+        elif splitter.is_target_class:
+            raise ValueError(
+                "The chosen splitter cannot be used in regression tasks."
+            )
         else:
-            if splitter.is_target_class:
-                raise ValueError(
-                    "The chosen splitter cannot be used in regression tasks."
-                )
             self.splitter = splitter
 
         self.kwargs = kwargs
@@ -140,9 +140,7 @@ class HoeffdingTreeRegressor(HoeffdingTree, base.Regressor):
     def leaf_prediction(self, leaf_prediction):
         if leaf_prediction not in {self._TARGET_MEAN, self._MODEL, self._ADAPTIVE}:
             print(
-                'Invalid leaf_prediction option "{}", will use default "{}"'.format(
-                    leaf_prediction, self._MODEL
-                )
+                f'Invalid leaf_prediction option "{leaf_prediction}", will use default "{self._MODEL}"'
             )
             self._leaf_prediction = self._MODEL
         else:
@@ -152,9 +150,7 @@ class HoeffdingTreeRegressor(HoeffdingTree, base.Regressor):
     def split_criterion(self, split_criterion):
         if split_criterion != "vr":  # variance reduction
             print(
-                "Invalid split_criterion option {}', will use default '{}'".format(
-                    split_criterion, "vr"
-                )
+                f"Invalid split_criterion option {split_criterion}', will use default 'vr'"
             )
             self._split_criterion = "vr"
         else:
@@ -168,11 +164,7 @@ class HoeffdingTreeRegressor(HoeffdingTree, base.Regressor):
 
         The type of learning node depends on the tree configuration.
         """
-        if parent is not None:
-            depth = parent.depth + 1
-        else:
-            depth = 0
-
+        depth = parent.depth + 1 if parent is not None else 0
         leaf_model = None
         if self.leaf_prediction in {self._MODEL, self._ADAPTIVE}:
             if parent is None:
@@ -304,22 +296,19 @@ class HoeffdingTreeRegressor(HoeffdingTree, base.Regressor):
         Predicted target value.
 
         """
-        if self._tree_root is not None:
-            found_node = self._tree_root.filter_instance_to_leaf(x, None, -1)  # noqa
-            node = found_node.node
-            if node is not None:
-                if node.is_leaf():
-                    return node.leaf_prediction(x, tree=self)
-                else:
-                    # The instance sorting ended up in a Split Node, since no branch was found
-                    # for some of the instance's features. Use the mean prediction in this case
-                    return node.stats.mean.get()
-            else:
-                parent = found_node.parent
-                return parent.stats.mean.get()
-        else:
+        if self._tree_root is None:
             # Model is empty
             return 0.0
+        found_node = self._tree_root.filter_instance_to_leaf(x, None, -1)  # noqa
+        node = found_node.node
+        if node is not None:
+            return (
+                node.leaf_prediction(x, tree=self)
+                if node.is_leaf()
+                else node.stats.mean.get()
+            )
+        parent = found_node.parent
+        return parent.stats.mean.get()
 
     def _attempt_to_split(self, node: LearningNode, parent: SplitNode, parent_idx: int):
         """Attempt to split a node.
@@ -377,12 +366,11 @@ class HoeffdingTreeRegressor(HoeffdingTree, base.Regressor):
                         split_attrs = best_split_suggestions[
                             i
                         ].split_test.attrs_test_depends_on()
-                        if len(split_attrs) == 1:
-                            if (
-                                best_split_suggestions[i].merit / best_suggestion.merit
-                                < best_ratio - 2 * hoeffding_bound
-                            ):
-                                poor_attrs.add(split_attrs[0])
+                        if len(split_attrs) == 1 and (
+                            best_split_suggestions[i].merit / best_suggestion.merit
+                            < best_ratio - 2 * hoeffding_bound
+                        ):
+                            poor_attrs.add(split_attrs[0])
                 for poor_att in poor_attrs:
                     node.disable_attribute(poor_att)
         if should_split:

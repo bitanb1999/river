@@ -26,9 +26,7 @@ def argmax(lst: list, rng: random.Random = None):
     max_value = max(lst)
     args_max = [i for (i, x) in enumerate(lst) if x == max_value]
     random_fun = rng.choice if rng else random.choice
-    arg_max = random_fun(args_max) if len(args_max) > 0 else args_max[0]
-
-    return arg_max
+    return random_fun(args_max) if args_max else args_max[0]
 
 
 class Bandit(base.EnsembleMixin):
@@ -97,9 +95,11 @@ class Bandit(base.EnsembleMixin):
 
     def __repr__(self):
         return (
-            f"{self.__class__.__name__}"
-            + f"\n\t{str(self.metric)}"
-            + f"\n\t{'Best model id: ' + str(self._best_model_idx)}"
+            (
+                f"{self.__class__.__name__}"
+                + f"\n\t{str(self.metric)}"
+                + f"\n\tBest model id: {str(self._best_model_idx)}"
+            )
         ).expandtabs(2)
 
     @abc.abstractmethod
@@ -141,17 +141,16 @@ class Bandit(base.EnsembleMixin):
     @property
     def percentage_pulled(self):
         """Returns the number of times (in %) each arm has been pulled."""
-        if not self.warm_up:
-            return [n / sum(self._N) for n in self._N]
-
-        return [0] * self._n_arms
+        return (
+            [0] * self._n_arms
+            if self.warm_up
+            else [n / sum(self._N) for n in self._N]
+        )
 
     def predict_one(self, x):
         """Return the prediction of the best model (defined as the one who maximises average reward)."""
         best_arm = self._best_model_idx
-        y_pred = self._pred_func(self[best_arm])(x)
-
-        return y_pred
+        return self._pred_func(self[best_arm])(x)
 
     def learn_one(self, x, y):
         """Updates the chosen model and the arm internals (the actual implementation is in Bandit._learn_one)."""
@@ -231,9 +230,7 @@ class Bandit(base.EnsembleMixin):
         metric_value = (
             metric_value if self.metric.bigger_is_better else (-1) * metric_value
         )
-        reward = 2 * sigmoid(metric_value)  # multiply per 2 to have reward in [0, 1]
-
-        return reward
+        return 2 * sigmoid(metric_value)
 
 
 class EpsilonGreedyBandit(Bandit):
@@ -260,13 +257,11 @@ class EpsilonGreedyBandit(Bandit):
             self._starting_epsilon = epsilon
 
     def _pull_arm(self):
-        chosen_arm = (
+        return (
             argmax(self.average_reward, self._rng)
             if (self._rng.random() > self.epsilon)
             else self._rng.choice(range(self._n_arms))
         )
-
-        return chosen_arm
 
     def _update_arm(self, arm, reward):
         # The other arm internals are already updated in the method `Bandit._learn_one`.
@@ -453,9 +448,7 @@ class UCBBandit(Bandit):
             avg_reward + exploration
             for (avg_reward, exploration) in zip(self.average_reward, exploration_bonus)
         ]
-        chosen_arm = argmax(upper_bound, self._rng)
-
-        return chosen_arm
+        return argmax(upper_bound, self._rng)
 
     def _update_arm(self, arm, reward):
         # The arm internals are already updated in the method `Bandit._learn_one`.

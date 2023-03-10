@@ -820,11 +820,7 @@ class RunningTimeMeasurements(object):
 
     def update_time_measurements(self, inrivernt=1):
         """Update the current total running time."""
-        if inrivernt > 0:
-            self._sample_count += inrivernt
-        else:
-            self._sample_count += 1
-
+        self._sample_count += inrivernt if inrivernt > 0 else 1
         self._total_time = self._training_time + self._testing_time
 
     def get_current_training_time(self):

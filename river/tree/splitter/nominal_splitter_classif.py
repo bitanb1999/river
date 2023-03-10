@@ -54,13 +54,11 @@ class NominalSplitterClassif(Splitter):
     ):
         best_suggestion = None
         att_values = sorted(
-            set(
-                [
-                    att_val
-                    for att_val_per_class in self._att_val_dist_per_class.values()
-                    for att_val in att_val_per_class
-                ]
-            )
+            {
+                att_val
+                for att_val_per_class in self._att_val_dist_per_class.values()
+                for att_val in att_val_per_class
+            }
         )
         if not binary_only:
             post_split_dist = self._class_dist_from_multiway_split()
@@ -91,8 +89,7 @@ class NominalSplitterClassif(Splitter):
                 resulting_dist[j][i] += value
 
         sorted_keys = sorted(resulting_dist.keys())
-        distributions = [dict(sorted(resulting_dist[k].items())) for k in sorted_keys]
-        return distributions
+        return [dict(sorted(resulting_dist[k].items())) for k in sorted_keys]
 
     def _class_dist_from_binary_split(self, val_idx):
         equal_dist = {}

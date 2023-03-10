@@ -156,7 +156,7 @@ class Agrawal(base.SyntheticDataset):
             "hyears",
             "loan",
         ]
-        self.target_values = [i for i in range(self.n_classes)]
+        self.target_values = list(range(self.n_classes))
 
     def __iter__(self):
         self._rng = check_random_state(self.seed)
@@ -182,14 +182,13 @@ class Agrawal(base.SyntheticDataset):
                 )
                 if not self.balance_classes:
                     desired_class_found = True
-                else:
-                    if (self._next_class_should_be_zero and (y == 0)) or (
+                elif (self._next_class_should_be_zero and (y == 0)) or (
                         (not self._next_class_should_be_zero) and (y == 1)
                     ):
-                        desired_class_found = True
-                        self._next_class_should_be_zero = (
-                            not self._next_class_should_be_zero
-                        )
+                    desired_class_found = True
+                    self._next_class_should_be_zero = (
+                        not self._next_class_should_be_zero
+                    )
 
             if self.perturbation > 0.0:
                 salary = self._perturb_value(salary, 20000, 150000)
@@ -200,10 +199,7 @@ class Agrawal(base.SyntheticDataset):
                 hyears = np.round(self._perturb_value(hyears, 1, 30))
                 loan = self._perturb_value(loan, 0, 500000)
 
-            x = dict()
-            for feature in self.feature_names:
-                x[feature] = eval(feature)
-
+            x = {feature: eval(feature) for feature in self.feature_names}
             yield x, y
 
     def _perturb_value(self, val, val_min, val_max, val_range=None):
@@ -230,69 +226,69 @@ class Agrawal(base.SyntheticDataset):
     def _classification_function_0(
         salary, commission, age, elevel, car, zipcode, hvalue, hyears, loan
     ):
-        return int((age < 40) or (60 <= age))
+        return int(age < 40 or age >= 60)
 
     @staticmethod
     def _classification_function_1(
         salary, commission, age, elevel, car, zipcode, hvalue, hyears, loan
     ):
         if age < 40:
-            return int((50000 <= salary) and (salary <= 100000))
+            return int(50000 <= salary <= 100000)
         elif age < 60:
-            return int((75000 <= salary) and (salary <= 125000))
+            return int(75000 <= salary <= 125000)
         else:
-            return int((25000 <= salary) and (salary <= 75000))
+            return int(25000 <= salary <= 75000)
 
     @staticmethod
     def _classification_function_2(
         salary, commission, age, elevel, car, zipcode, hvalue, hyears, loan
     ):
         if age < 40:
-            return int((elevel == 0) or (elevel == 1))
+            return int(elevel in [0, 1])
         elif age < 60:
-            return int((elevel == 1) or (elevel == 2) or (elevel == 3))
+            return int(elevel in [1, 2, 3])
         else:
-            return int((elevel == 2) or (elevel == 3) or (elevel == 4))
+            return int(elevel in [2, 3, 4])
 
     @staticmethod
     def _classification_function_3(
         salary, commission, age, elevel, car, zipcode, hvalue, hyears, loan
     ):
         if age < 40:
-            if (elevel == 0) or (elevel == 1):
-                return int((25000 <= salary) and (salary <= 75000))
-            else:
-                return int((50000 <= salary) and (salary <= 100000))
+            return (
+                int(25000 <= salary <= 75000)
+                if elevel in [0, 1]
+                else int(50000 <= salary <= 100000)
+            )
         elif age < 60:
-            if (elevel == 1) or (elevel == 2) or (elevel == 3):
-                return int((50000 <= salary) and (salary <= 100000))
+            if elevel in [1, 2, 3]:
+                return int(50000 <= salary <= 100000)
             else:
-                return int((75000 <= salary) and (salary <= 125000))
+                return int(75000 <= salary <= 125000)
+        elif elevel in [2, 3, 4]:
+            return int(50000 <= salary <= 100000)
         else:
-            if (elevel == 2) or (elevel == 3) or (elevel == 4):
-                return int((50000 <= salary) and (salary <= 100000))
-            else:
-                return int((25000 <= salary) and (salary <= 75000))
+            return int(25000 <= salary <= 75000)
 
     @staticmethod
     def _classification_function_4(
         salary, commission, age, elevel, car, zipcode, hvalue, hyears, loan
     ):
         if age < 40:
-            if (50000 <= salary) and (salary <= 100000):
-                return int((100000 <= loan) and (loan <= 300000))
-            else:
-                return int((200000 <= salary) and (salary <= 400000))
+            return (
+                int(100000 <= loan <= 300000)
+                if 50000 <= salary <= 100000
+                else int(200000 <= salary <= 400000)
+            )
         elif age < 60:
-            if (75000 <= salary) and (salary <= 125000):
-                return int((200000 <= salary) and (loan <= 400000))
+            if 75000 <= salary <= 125000:
+                return int(salary >= 200000 and loan <= 400000)
             else:
-                return int((300000 <= salary) and (salary <= 500000))
+                return int(300000 <= salary <= 500000)
+        elif 25000 <= salary <= 75000:
+            return int(300000 <= loan <= 500000)
         else:
-            if (25000 <= salary) and (salary <= 75000):
-                return int((300000 <= loan) and (loan <= 500000))
-            else:
-                return int((75000 <= loan) and (loan <= 300000))
+            return int(75000 <= loan <= 300000)
 
     @staticmethod
     def _classification_function_5(
@@ -301,11 +297,11 @@ class Agrawal(base.SyntheticDataset):
         totalsalary = salary + commission
 
         if age < 40:
-            return int((50000 <= totalsalary) and (totalsalary <= 100000))
+            return int(50000 <= totalsalary <= 100000)
         elif age < 60:
-            return int((75000 <= totalsalary) and (totalsalary <= 125000))
+            return int(75000 <= totalsalary <= 125000)
         else:
-            return int((25000 <= totalsalary) and (totalsalary <= 75000))
+            return int(25000 <= totalsalary <= 75000)
 
     @staticmethod
     def _classification_function_6(
@@ -332,8 +328,6 @@ class Agrawal(base.SyntheticDataset):
     def _classification_function_9(
         salary, commission, age, elevel, car, zipcode, hvalue, hyears, loan
     ):
-        equity = 0
-        if hyears >= 20:
-            equity = hvalue * (hyears - 20) / 10
+        equity = hvalue * (hyears - 20) / 10 if hyears >= 20 else 0
         disposable = 2 * (salary + commission) / 3 - 5000 * elevel + equity / 5 - 10000
         return 0 if disposable > 1 else 1

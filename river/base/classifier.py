@@ -64,10 +64,7 @@ class Classifier(estimator.Estimator):
 
         """
 
-        # The following code acts as a default for each classifier, and may be overridden on an
-        # individual basis.
-        y_pred = self.predict_proba_one(x)
-        if y_pred:
+        if y_pred := self.predict_proba_one(x):
             return max(y_pred, key=y_pred.get)
         return None
 
@@ -100,9 +97,7 @@ class Classifier(estimator.Estimator):
 
         """
         y_pred = self.predict_proba_many(X)
-        if y_pred.empty:
-            return y_pred
-        return y_pred.idxmax(axis="columns")
+        return y_pred if y_pred.empty else y_pred.idxmax(axis="columns")
 
     @property
     def _multiclass(self):

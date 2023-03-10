@@ -36,7 +36,7 @@ class InfoGainSplitCriterion(SplitCriterion):
     @staticmethod
     def range_of_merit(pre_split_dist):
         num_classes = len(pre_split_dist)
-        num_classes = num_classes if num_classes > 2 else 2
+        num_classes = max(num_classes, 2)
         return math.log2(num_classes)
 
     def compute_entropy(self, dist):

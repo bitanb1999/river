@@ -81,16 +81,15 @@ class FM(BaseFM):
             f: sum(v[j][f] * xj for j, xj in x.items()) for f in range(self.n_factors)
         }
 
-        # Calculate each latent factor gradient before updating any
-        gradients = {}
-        for j, xj in x.items():
-            gradients[j] = {
-                f: g_loss * (xj * precomputed_sum[f] - v[j][f] * xj ** 2)
+        gradients = {
+            j: {
+                f: g_loss * (xj * precomputed_sum[f] - v[j][f] * xj**2)
                 + l1 * sign(v[j][f])
                 + l2 * v[j][f]
                 for f in range(self.n_factors)
             }
-
+            for j, xj in x.items()
+        }
         # Finally update the latent weights
         for j in x.keys():
             self.latents[j] = self.latent_optimizer.step(w=v[j], g=gradients[j])

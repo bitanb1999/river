@@ -106,13 +106,13 @@ class LED(base.SyntheticDataset):
         self.noise_percentage = noise_percentage
         self.irrelevant_features = irrelevant_features
         self.n_cat_features = self.n_features
-        self.target_values = [i for i in range(self.n_classes)]
+        self.target_values = list(range(self.n_classes))
 
     def __iter__(self):
         self._rng = check_random_state(self.seed)
 
         while True:
-            x = dict()
+            x = {}
             y = self._rng.randint(self.n_classes)
 
             for i in range(self._N_RELEVANT_FEATURES):

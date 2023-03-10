@@ -86,7 +86,7 @@ class OneVsRestClassifier(base.WrapperMixin, base.Classifier):
 
         # Train each label's associated classifier
         for label, model in self.classifiers.items():
-            model.learn_one(x, bool(y == label))
+            model.learn_one(x, y == label)
 
         return self
 
@@ -129,6 +129,8 @@ class OneVsRestClassifier(base.WrapperMixin, base.Classifier):
         return y_pred.div(y_pred.sum(axis="columns"), axis="rows")
 
     def predict_many(self, X):
-        if not self.classifiers:
-            return pd.Series([None] * len(X), index=X.index, dtype="object")
-        return self.predict_proba_many(X).idxmax(axis="columns").rename(self._y_name)
+        return (
+            self.predict_proba_many(X).idxmax(axis="columns").rename(self._y_name)
+            if self.classifiers
+            else pd.Series([None] * len(X), index=X.index, dtype="object")
+        )

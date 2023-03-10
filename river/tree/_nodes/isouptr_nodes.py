@@ -28,7 +28,7 @@ class LearningNodeMeanMultiTarget(LearningNodeMean):
     """
 
     def __init__(self, stats, depth, splitter, **kwargs):
-        stats = stats if stats else VectorDict(default_factory=functools.partial(Var))
+        stats = stats or VectorDict(default_factory=functools.partial(Var))
         super().__init__(stats, depth, splitter, **kwargs)
 
     def update_stats(self, y, sample_weight):
@@ -93,10 +93,9 @@ class LearningNodeModelMultiTarget(LearningNodeMeanMultiTarget):
                         self._leaf_models[target_id] = deepcopy(
                             next(iter(self._leaf_models.values()))
                         )
-                    model = self._leaf_models[target_id]
                 else:
                     self._leaf_models[target_id] = deepcopy(tree.leaf_model)
-                    model = self._leaf_models[target_id]
+                model = self._leaf_models[target_id]
                 sign = inspect.signature(model.learn_one).parameters
                 self._model_supports_weights[target_id] = (
                     "sample_weight" in sign or "w" in sign

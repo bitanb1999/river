@@ -49,7 +49,7 @@ class Discard(base.Transformer):
         return {i: xi for i, xi in x.items() if i not in self.blacklist}
 
     def __str__(self):
-        return "~" + str(sorted(self.blacklist))
+        return f"~{str(sorted(self.blacklist))}"
 
     def __repr__(self):
         if self.blacklist:

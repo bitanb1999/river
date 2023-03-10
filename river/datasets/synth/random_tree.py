@@ -97,7 +97,7 @@ class RandomTree(base.SyntheticDataset):
         self.features_num = [f"x_num_{i}" for i in range(self.n_num_features)]
         self.features_cat = [f"x_cat_{i}" for i in range(self.n_cat_features)]
         self.feature_names = self.features_num + self.features_cat
-        self.target_values = [i for i in range(self.n_classes)]
+        self.target_values = list(range(self.n_classes))
 
     def _generate_random_tree(self):
         """
@@ -211,7 +211,7 @@ class RandomTree(base.SyntheticDataset):
                 np.argwhere(candidate_features == split_node.split_feature_idx),
             )
             # Generate children per category
-            for i in range(self.n_categories_per_feature):
+            for _ in range(self.n_categories_per_feature):
                 split_node.children.append(
                     self._generate_random_tree_node(
                         current_depth + 1,
@@ -230,10 +230,10 @@ class RandomTree(base.SyntheticDataset):
         feature = self.feature_names[node.split_feature_idx]
         if node.split_feature_idx < self.n_num_features:
             idx = 0 if x[feature] < node.split_feature_val else 1
-            return self._classify_instance(node.children[idx], x)
         else:
             idx = x[feature]
-            return self._classify_instance(node.children[idx], x)
+
+        return self._classify_instance(node.children[idx], x)
 
     def __iter__(self):
         rng_sample = check_random_state(self.seed_sample)
@@ -242,9 +242,7 @@ class RandomTree(base.SyntheticDataset):
 
         # Randomly generate features, and then classify the resulting instance.
         while True:
-            x = dict()
-            for feature in self.features_num:
-                x[feature] = rng_sample.rand()
+            x = {feature: rng_sample.rand() for feature in self.features_num}
             for feature in self.features_cat:
                 x[feature] = rng_sample.randint(self.n_categories_per_feature)
             y = self._classify_instance(self.tree_root, x)

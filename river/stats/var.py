@@ -106,7 +106,7 @@ class Var(base.Univariate):
             ) * other.sigma
             # apply the correction
             self.sigma = (
-                self.sigma - (delta * delta) * (self.mean.n * other.mean.n) / old_n
+                self.sigma - delta**2 * (self.mean.n * other.mean.n) / old_n
             ) / (self.mean.n - self.ddof)
 
         else:
@@ -186,9 +186,7 @@ class RollingVar(base.RollingUnivariate):
     @property
     def correction_factor(self):
         n = len(self.rolling_mean)
-        if n > self.ddof:
-            return n / (n - self.ddof)
-        return 1
+        return n / (n - self.ddof) if n > self.ddof else 1
 
     def get(self):
         try:

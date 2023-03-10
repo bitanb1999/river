@@ -174,8 +174,7 @@ class SKL2RiverClassifier(SKL2RiverBase, base.Classifier):
 
     def predict_one(self, x):
         try:
-            y_pred = self.estimator.predict(X=[list(x.values())])[0]
-            return y_pred
+            return self.estimator.predict(X=[list(x.values())])[0]
         except exceptions.NotFittedError:
             return self.classes[0]
 

@@ -399,24 +399,24 @@ class LDA(base.Transformer):
 
     def _prune_vocabulary(self):
         """Reduce the size of the index exceeds the maximum size."""
-        if self.nu_1[0].shape[0] > self.maximum_size_vocabulary:
+        if self.nu_1[0].shape[0] <= self.maximum_size_vocabulary:
+            return
+        for topic in range(self.n_components):
+            # Updates words latent variables
+            self.nu_1[topic] = self.nu_1[topic][: self.maximum_size_vocabulary]
+            self.nu_2[topic] = self.nu_2[topic][: self.maximum_size_vocabulary]
 
-            for topic in range(self.n_components):
-                # Updates words latent variables
-                self.nu_1[topic] = self.nu_1[topic][: self.maximum_size_vocabulary]
-                self.nu_2[topic] = self.nu_2[topic][: self.maximum_size_vocabulary]
+        new_word_to_index = {}
+        new_index_to_word = {}
 
-            new_word_to_index = {}
-            new_index_to_word = {}
+        for index in range(1, self.maximum_size_vocabulary):
+            # Updates words indexes
+            word = self.index_to_word[index]
+            new_word_to_index[word] = index
+            new_index_to_word[index] = word
 
-            for index in range(1, self.maximum_size_vocabulary):
-                # Updates words indexes
-                word = self.index_to_word[index]
-                new_word_to_index[word] = index
-                new_index_to_word[index] = word
+        self.word_to_index = new_word_to_index
+        self.index_to_word = new_index_to_word
 
-            self.word_to_index = new_word_to_index
-            self.index_to_word = new_index_to_word
-
-            self.truncation_size = self.nu_1[0].shape[0]
-            self.truncation_size_prime = self.truncation_size
+        self.truncation_size = self.nu_1[0].shape[0]
+        self.truncation_size_prime = self.truncation_size

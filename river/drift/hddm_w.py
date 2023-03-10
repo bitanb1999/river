@@ -206,21 +206,20 @@ class HDDM_W(DriftDetector):
                 self.total.independent_bounded_condition_sum
             )
             self.sample2_decr_monitor = self.SampleInfo()
+        elif self.sample2_decr_monitor.EWMA_estimator < 0:
+            self.sample2_decr_monitor.EWMA_estimator = value
+            self.sample2_decr_monitor.independent_bounded_condition_sum = 1
         else:
-            if self.sample2_decr_monitor.EWMA_estimator < 0:
-                self.sample2_decr_monitor.EWMA_estimator = value
-                self.sample2_decr_monitor.independent_bounded_condition_sum = 1
-            else:
-                self.sample2_decr_monitor.EWMA_estimator = (
-                    self.lambda_option * value
-                    + aux_decay * self.sample2_decr_monitor.EWMA_estimator
-                )
-                self.sample2_decr_monitor.independent_bounded_condition_sum = (
-                    self.lambda_option * self.lambda_option
-                    + aux_decay
-                    * aux_decay
-                    * self.sample2_decr_monitor.independent_bounded_condition_sum
-                )
+            self.sample2_decr_monitor.EWMA_estimator = (
+                self.lambda_option * value
+                + aux_decay * self.sample2_decr_monitor.EWMA_estimator
+            )
+            self.sample2_decr_monitor.independent_bounded_condition_sum = (
+                self.lambda_option * self.lambda_option
+                + aux_decay
+                * aux_decay
+                * self.sample2_decr_monitor.independent_bounded_condition_sum
+            )
 
     def reset(self):
         """Reset the change detector."""

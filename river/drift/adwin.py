@@ -90,9 +90,7 @@ class ADWIN(DriftDetector):
     @property
     def estimation(self):
         """Error estimation"""
-        if self.width == 0:
-            return 0.0
-        return self.total / self.width
+        return 0.0 if self.width == 0 else self.total / self.width
 
     def update(self, value):
         """Update the change detector with a single data point.

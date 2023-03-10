@@ -244,7 +244,7 @@ class LinearRegression(GLM, base.MiniBatchRegressor):
             intercept_lr=intercept_lr,
             l2=l2,
             clip_gradient=clip_gradient,
-            initializer=initializer if initializer else optim.initializers.Zeros(),
+            initializer=initializer or optim.initializers.Zeros(),
         )
 
     def predict_one(self, x):
@@ -373,7 +373,7 @@ class LogisticRegression(GLM, base.MiniBatchClassifier):
             intercept_lr=intercept_lr,
             l2=l2,
             clip_gradient=clip_gradient,
-            initializer=initializer if initializer else optim.initializers.Zeros(),
+            initializer=initializer or optim.initializers.Zeros(),
         )
 
     def predict_proba_one(self, x):

@@ -115,17 +115,16 @@ class ConceptDriftStream(base.SyntheticDataset):
 
         self.seed = seed
         self.alpha = alpha
-        if self.alpha is not None:
-            if 0 < self.alpha <= 90.0:
-                w = int(1 / np.tan(self.alpha * np.pi / 180))
-                self.width = w if w > 0 else 1
-            else:
-                raise ValueError(
-                    f"Invalid alpha value: {alpha}. "
-                    f"Valid values are in the range (0.0, 90.0]"
-                )
-        else:
+        if self.alpha is None:
             self.width = width
+        elif 0 < self.alpha <= 90.0:
+            w = int(1 / np.tan(self.alpha * np.pi / 180))
+            self.width = w if w > 0 else 1
+        else:
+            raise ValueError(
+                f"Invalid alpha value: {alpha}. "
+                f"Valid values are in the range (0.0, 90.0]"
+            )
         self.position = position
         self.stream = stream
         self.drift_stream = drift_stream
@@ -156,14 +155,10 @@ class ConceptDriftStream(base.SyntheticDataset):
 
         config = "\n\nConfiguration:\n"
         for k, v in params.items():
-            if not isinstance(v, base.SyntheticDataset):
-                indent = 0
-            else:
-                indent = l_len_config + 2
+            indent = l_len_config + 2 if isinstance(v, base.SyntheticDataset) else 0
             config += (
                 "".join(
-                    k.rjust(l_len_config)
-                    + "  "
+                    f"{k.rjust(l_len_config)}  "
                     + textwrap.indent(str(v).ljust(r_len_config), " " * indent)
                 )
                 + "\n"
@@ -172,13 +167,11 @@ class ConceptDriftStream(base.SyntheticDataset):
         l_len_prop = max(map(len, self._repr_content.keys()))
         r_len_prop = max(map(len, self._repr_content.values()))
 
-        out = (
+        return (
             "Synthetic data generator\n\n"
             + "\n".join(
-                k.rjust(l_len_prop) + "  " + v.ljust(r_len_prop)
+                f"{k.rjust(l_len_prop)}  {v.ljust(r_len_prop)}"
                 for k, v in self._repr_content.items()
             )
             + config
         )
-
-        return out

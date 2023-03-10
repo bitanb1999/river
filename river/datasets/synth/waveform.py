@@ -79,9 +79,9 @@ class Waveform(base.SyntheticDataset):
         self, seed: int or np.random.RandomState = None, has_noise: bool = False
     ):
         super().__init__(
-            n_features=self._N_BASE_FEATURES
-            if not has_noise
-            else self._N_FEATURES_INCLUDING_NOISE,
+            n_features=self._N_FEATURES_INCLUDING_NOISE
+            if has_noise
+            else self._N_BASE_FEATURES,
             n_classes=self._N_CLASSES,
             n_outputs=1,
             task=base.MULTI_CLF,
@@ -90,26 +90,26 @@ class Waveform(base.SyntheticDataset):
         self.has_noise = has_noise
         self.n_num_features = self._N_BASE_FEATURES
 
-        self.target_values = [i for i in range(self.n_classes)]
+        self.target_values = list(range(self.n_classes))
 
     def __iter__(self):
         rng = check_random_state(self.seed)
 
         while True:
-            x = dict()
             y = rng.randint(self.n_classes)
             choice_a = 1 if (y == 2) else 0
             choice_b = 1 if (y == 0) else 2
             multiplier_a = rng.rand()
             multiplier_b = 1.0 - multiplier_a
 
-            for i in range(self._N_BASE_FEATURES):
-                x[i] = (
+            x = {
+                i: (
                     multiplier_a * self._H_FUNCTION[choice_a][i]
                     + multiplier_b * self._H_FUNCTION[choice_b][i]
                     + rng.normal()
                 )
-
+                for i in range(self._N_BASE_FEATURES)
+            }
             if self.has_noise:
                 for i in range(self._N_BASE_FEATURES, self._N_FEATURES_INCLUDING_NOISE):
                     x[i] = rng.normal()

@@ -180,25 +180,24 @@ class HoeffdingAdaptiveTreeRegressor(HoeffdingTreeRegressor):
         return self
 
     def predict_one(self, x):
-        if self._tree_root is not None:
-            found_nodes = self._filter_instance_to_leaves(x, None, -1)
-
-            pred = 0.0
-            for fn in found_nodes:
-                # parent_branch == -999 means that the node is the root of an alternate tree.
-                # In other words, the alternate tree is a single leaf. It is probably not accurate
-                # enough to be used to predict, so skip it
-                if fn.parent_branch != -999:
-                    leaf_node = fn.node
-                    if leaf_node is None:
-                        leaf_node = fn.parent
-                    # Option Tree prediction (of sorts): combine the response of all leaves reached
-                    # by the instance
-                    pred += leaf_node.leaf_prediction(x, tree=self)
-            # Mean prediction among the reached leaves
-            return pred / len(found_nodes)
-        else:
+        if self._tree_root is None:
             return 0.0
+        found_nodes = self._filter_instance_to_leaves(x, None, -1)
+
+        pred = 0.0
+        for fn in found_nodes:
+            # parent_branch == -999 means that the node is the root of an alternate tree.
+            # In other words, the alternate tree is a single leaf. It is probably not accurate
+            # enough to be used to predict, so skip it
+            if fn.parent_branch != -999:
+                leaf_node = fn.node
+                if leaf_node is None:
+                    leaf_node = fn.parent
+                # Option Tree prediction (of sorts): combine the response of all leaves reached
+                # by the instance
+                pred += leaf_node.leaf_prediction(x, tree=self)
+        # Mean prediction among the reached leaves
+        return pred / len(found_nodes)
 
     def _filter_instance_to_leaves(self, x, split_parent, parent_branch):
         nodes = []

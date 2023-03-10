@@ -100,10 +100,8 @@ class FwFM(BaseFM):
             for f in range(self.n_factors)
         }
 
-        # Calculate each latent and interaction weights gradients before updating any of them
-        latent_gradients = {}
-        for j, xj in x.items():
-            latent_gradients[j] = {
+        latent_gradients = {
+            j: {
                 f: g_loss
                 * (
                     xj * precomputed_sum[f"{j}_{f}"]
@@ -113,7 +111,8 @@ class FwFM(BaseFM):
                 + l2 * v[j][f]
                 for f in range(self.n_factors)
             }
-
+            for j, xj in x.items()
+        }
         int_gradients = {
             field(j1) + field(j2): g_loss * (x[j1] * x[j2] * np.dot(v[j1], v[j2]))
             for j1, j2 in itertools.combinations(x.keys(), 2)
