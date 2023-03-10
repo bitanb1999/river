@@ -146,13 +146,10 @@ class Histogram(collections.UserList):
         if i == len(self):
             # x is past the right-most bin
             self.append(b)
+        elif x >= self[i].left:
+            self[i].count += 1
         else:
-            # Inrivernt the bin counter if x is part of the ith bin
-            if x >= self[i].left:
-                self[i].count += 1
-            # Insert the bin if it is between bin i-1 and bin i
-            else:
-                self.insert(i, b)
+            self.insert(i, b)
 
         # Bins have to be merged if there are more than max_bins
         if len(self) > self.max_bins:

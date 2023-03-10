@@ -46,11 +46,10 @@ class EBSTSplitter(Splitter):
     def update(self, att_val, target_val, sample_weight):
         if att_val is None:
             return
+        if self._root is None:
+            self._root = EBSTNode(att_val, target_val, sample_weight)
         else:
-            if self._root is None:
-                self._root = EBSTNode(att_val, target_val, sample_weight)
-            else:
-                self._root.insert_value(att_val, target_val, sample_weight)
+            self._root.insert_value(att_val, target_val, sample_weight)
 
         return self
 
@@ -232,12 +231,10 @@ class EBSTSplitter(Splitter):
                 # Root node
                 if parent is None:
                     self._root = None
-                else:  # Root node
-                    # Remove bad candidate
-                    if is_left_child:
-                        parent._left = None
-                    else:
-                        parent._right = None
+                elif is_left_child:
+                    parent._left = None
+                else:
+                    parent._right = None
                 return True
 
         return False

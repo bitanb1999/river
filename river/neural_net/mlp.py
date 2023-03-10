@@ -81,11 +81,7 @@ class MLP:
         """
 
         z = {}  # z = w(x) + b
-        a = {}  # a = f(z)
-
-        # As a convention, we sort the columns of the input DataFrame. This allows the user to
-        # pass DataFrames with different column orders without having to worry.
-        a[1] = X.values[:, np.argsort(X.columns.to_numpy())]
+        a = {1: X.values[:, np.argsort(X.columns.to_numpy())]}
 
         for i in range(2, self.n_layers + 1):
             z[i] = np.dot(a[i - 1], self.w[i - 1]) + self.b[i - 1]
@@ -290,7 +286,7 @@ class MLPRegressor(base.Regressor, MLP):
         )
 
     @classmethod
-    def _default_params(self):
+    def _default_params(cls):
         from . import activations
 
         return {
@@ -299,9 +295,7 @@ class MLPRegressor(base.Regressor, MLP):
         }
 
     def predict_many(self, X):
-        if not hasattr(self, "w"):
-            return pd.DataFrame({0: 0}, index=X.index)
-        return self(X)
+        return self(X) if hasattr(self, "w") else pd.DataFrame({0: 0}, index=X.index)
 
     def learn_one(self, x, y):
 

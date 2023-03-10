@@ -208,10 +208,7 @@ class SplitNode(Node):
         -------
             Child node or None if the corresponding branch index does not exists.
         """
-        if index in self._children:
-            return self._children[index]
-        else:
-            return None
+        return self._children[index] if index in self._children else None
 
     def instance_child_index(self, x: dict) -> int:
         """Get the branch index for a given instance at the current node.
@@ -241,14 +238,14 @@ class SplitNode(Node):
 
         """
         child_index = self.instance_child_index(x)
-        if child_index >= 0:
-            child = self.get_child(child_index)
-            if child is not None:
-                return child.filter_instance_to_leaf(x, self, child_index)
-            else:
-                return FoundNode(None, self, child_index)
-        else:
+        if child_index < 0:
             return FoundNode(self, parent, parent_branch)
+        child = self.get_child(child_index)
+        return (
+            child.filter_instance_to_leaf(x, self, child_index)
+            if child is not None
+            else FoundNode(None, self, child_index)
+        )
 
     def path(self, x):
         yield self
@@ -393,8 +390,7 @@ class LearningNode(Node, metaclass=ABCMeta):
         x
             The input instance.
         """
-        for att_id, att_val in x.items():
-            yield att_id, att_val
+        yield from x.items()
 
     def update_splitters(self, x, y, sample_weight, nominal_attributes):
         for att_id, att_val in self._iter_features(x):

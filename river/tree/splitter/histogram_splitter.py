@@ -42,7 +42,7 @@ class HistogramSplitter(Splitter):
             return 0.0
 
         total_weight = self.hists[target_val].n
-        if not total_weight > 0:
+        if total_weight <= 0:
             return 0.0
 
         i = bisect.bisect(self.hists[target_val], Bin(att_val, att_val, 1))

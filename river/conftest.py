@@ -3,15 +3,11 @@ collect_ignore = []
 try:
     import sklearn  # noqa: F401
 except ImportError:
-    collect_ignore.append("compat/sklearn.py")
-    collect_ignore.append("compat/test_sklearn.py")
-
+    collect_ignore.extend(("compat/sklearn.py", "compat/test_sklearn.py"))
 try:
     import sqlalchemy  # noqa: F401
 except ImportError:
-    collect_ignore.append("stream/iter_sql.py")
-    collect_ignore.append("stream/test_sql.py")
-
+    collect_ignore.extend(("stream/iter_sql.py", "stream/test_sql.py"))
 try:
     import surprise  # noqa: F401
 except ImportError:

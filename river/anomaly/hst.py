@@ -27,12 +27,8 @@ class HSTBranch(Branch):
         try:
             value = x[self.feature]
         except KeyError:
-            if left.l_mass < right.l_mass:
-                return right
-            return left
-        if value < self.threshold:
-            return left
-        return right
+            return right if left.l_mass < right.l_mass else left
+        return left if value < self.threshold else right
 
 
 def make_padded_tree(limits, height, padding, rng=random, **node_params):

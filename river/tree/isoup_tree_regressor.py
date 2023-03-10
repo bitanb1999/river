@@ -138,9 +138,7 @@ class iSOUPTreeRegressor(tree.HoeffdingTreeRegressor, base.MultiOutputMixin):
     def leaf_prediction(self, leaf_prediction):
         if leaf_prediction not in {self._TARGET_MEAN, self._MODEL, self._ADAPTIVE}:
             print(
-                'Invalid leaf_prediction option "{}", will use default "{}"'.format(
-                    leaf_prediction, self._MODEL
-                )
+                f'Invalid leaf_prediction option "{leaf_prediction}", will use default "{self._MODEL}"'
             )
             self._leaf_prediction = self._MODEL
         else:
@@ -153,9 +151,7 @@ class iSOUPTreeRegressor(tree.HoeffdingTreeRegressor, base.MultiOutputMixin):
             split_criterion = "icvr"
         if split_criterion != "icvr":  # intra cluster variance reduction
             print(
-                'Invalid split_criterion option "{}", will use default "{}"'.format(
-                    split_criterion, "icvr"
-                )
+                f'Invalid split_criterion option "{split_criterion}", will use default "icvr"'
             )
             self._split_criterion = "icvr"
         else:
@@ -170,11 +166,7 @@ class iSOUPTreeRegressor(tree.HoeffdingTreeRegressor, base.MultiOutputMixin):
         """Create a new learning node. The type of learning node depends on
         the tree configuration.
         """
-        if parent is not None:
-            depth = parent.depth + 1
-        else:
-            depth = 0
-
+        depth = parent.depth + 1 if parent is not None else 0
         leaf_models = None
         if self.leaf_prediction in {self._MODEL, self._ADAPTIVE}:
             if parent is None:
@@ -252,25 +244,22 @@ class iSOUPTreeRegressor(tree.HoeffdingTreeRegressor, base.MultiOutputMixin):
             Predicted target values.
         """
 
-        if self._tree_root is not None:
-            found_node = self._tree_root.filter_instance_to_leaf(x, None, -1)
-            node = found_node.node
-            if node is not None:
-                if node.is_leaf():
-                    return node.leaf_prediction(x, tree=self)
-                else:
-                    # The instance sorting ended up in a Split Node, since no branch was found
-                    # for some of the instance's features. Use the mean prediction in this case
-                    return {
-                        t: node.stats[t].mean.get() if t in node.stats else 0.0
-                        for t in self.targets
-                    }
-            else:
-                parent = found_node.parent
-                return {
-                    t: parent.stats[t].mean.get() if t in parent.stats else 0.0
-                    for t in self.targets
-                }
-        else:
+        if self._tree_root is None:
             # Model is empty
             return {}
+        found_node = self._tree_root.filter_instance_to_leaf(x, None, -1)
+        node = found_node.node
+        if node is not None:
+            return (
+                node.leaf_prediction(x, tree=self)
+                if node.is_leaf()
+                else {
+                    t: node.stats[t].mean.get() if t in node.stats else 0.0
+                    for t in self.targets
+                }
+            )
+        parent = found_node.parent
+        return {
+            t: parent.stats[t].mean.get() if t in parent.stats else 0.0
+            for t in self.targets
+        }

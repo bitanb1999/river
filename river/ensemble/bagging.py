@@ -248,9 +248,11 @@ class ADWINBaggingClassifier(BaggingClassifier):
                 y_pred = model.predict_one(x)
                 error_estimation = self._drift_detectors[i].estimation
                 self._drift_detectors[i].update(int(y_pred == y))
-                if self._drift_detectors[i].change_detected:
-                    if self._drift_detectors[i].estimation > error_estimation:
-                        change_detected = True
+                if (
+                    self._drift_detectors[i].change_detected
+                    and self._drift_detectors[i].estimation > error_estimation
+                ):
+                    change_detected = True
             except ValueError:
                 change_detected = False
 
@@ -382,12 +384,11 @@ class LeveragingBaggingClassifier(BaggingClassifier):
         error = self._drift_detectors[i].estimation
         y_pred = self.models[i].predict_one(x)
         if y_pred != y:
-            k = 1
+            return 1
         elif error != 1.0 and self._rng.rand() < (error / (1.0 - error)):
-            k = 1
+            return 1
         else:
-            k = 0
-        return k
+            return 0
 
     def _leveraging_bag_half(self, **kwargs):
         # Resampling without replacement for half of the instances
@@ -414,9 +415,11 @@ class LeveragingBaggingClassifier(BaggingClassifier):
                 incorrectly_classifies = int(y_pred != y)
                 error = self._drift_detectors[i].estimation
                 self._drift_detectors[i].update(incorrectly_classifies)
-                if self._drift_detectors[i].change_detected:
-                    if self._drift_detectors[i].estimation > error:
-                        change_detected = True
+                if (
+                    self._drift_detectors[i].change_detected
+                    and self._drift_detectors[i].estimation > error
+                ):
+                    change_detected = True
 
         if change_detected:
             self.n_detected_changes += 1

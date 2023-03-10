@@ -25,9 +25,7 @@ class SMAPE(base.MeanMetric, base.RegressionMetric):
 
     def _eval(self, y_true, y_pred):
         den = abs(y_true) + abs(y_pred)
-        if den == 0:
-            return 0.0
-        return 2.0 * abs(y_true - y_pred) / den
+        return 0.0 if den == 0 else 2.0 * abs(y_true - y_pred) / den
 
     def get(self):
         return 100 * super().get()

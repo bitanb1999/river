@@ -51,12 +51,11 @@ class Separation(base.MeanInternalMetric):
         return True
 
     def _eval(self, x, y_pred, centers):
-        sum_distance_other_clusters = 0
-        for i in centers:
-            if i != y_pred:
-                sum_distance_other_clusters += math.sqrt(
-                    utils.math.minkowski_distance(centers[i], x, 2)
-                )
+        sum_distance_other_clusters = sum(
+            math.sqrt(utils.math.minkowski_distance(centers[i], x, 2))
+            for i in centers
+            if i != y_pred
+        )
         try:
             return sum_distance_other_clusters / (len(centers) - 1)
         except ZeroDivisionError:

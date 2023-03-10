@@ -77,7 +77,7 @@ class StackingClassifier(base.EnsembleMixin, base.Classifier):
 
         # Optionally, add the base features
         if self.include_features:
-            oof.update(x)
+            oof |= x
 
         # Update the meta-classifier using the predictions from the base classifiers
         self.meta_classifier.learn_one(oof, y)
@@ -93,6 +93,6 @@ class StackingClassifier(base.EnsembleMixin, base.Classifier):
         }
 
         if self.include_features:
-            oof.update(x)
+            oof |= x
 
         return self.meta_classifier.predict_proba_one(oof)

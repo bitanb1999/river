@@ -125,9 +125,7 @@ class ClassifierChain(BaseChain, base.Classifier, base.MultiOutputMixin):
             else:
                 x[o] = y_pred[True]
 
-        # Now we check if there are any new outputs
-        n_unseen = len(y) - n_seen
-        if n_unseen:
+        if n_unseen := len(y) - n_seen:
             for o in y:
                 if o not in self.order:
                     self.order.append(o)
@@ -234,9 +232,7 @@ class RegressorChain(BaseChain, base.Regressor, base.MultiOutputMixin):
             # The predictions are stored as features for the next label
             x[o] = y_pred
 
-        # Now we check if there are any new outputs
-        n_unseen = len(y) - n_seen
-        if n_unseen:
+        if n_unseen := len(y) - n_seen:
             for o in y:
                 if o not in self.order:
                     self.order.append(o)
@@ -423,7 +419,7 @@ class MonteCarloClassifierChain(ProbabilisticClassifierChain):
             clf = self[label]
 
             y_pred = clf.predict_proba_one(x)
-            y_val = self._rng.choice(2, 1, p=[v for v in y_pred.values()])[0]
+            y_val = self._rng.choice(2, 1, p=list(y_pred.values()))[0]
             # Extend features
             x[label] = y_val
             y[label] = y_val
@@ -440,7 +436,7 @@ class MonteCarloClassifierChain(ProbabilisticClassifierChain):
         y_pred = ClassifierChain.predict_one(self, x)
         max_payoff = self._payoff(x=x, y=y_pred)
         # for M times
-        for m in range(self.m):
+        for _ in range(self.m):
             y_, p_ = self._sample(
                 x
             )  # N.B. in fact, the calculation p_ is done again in P.

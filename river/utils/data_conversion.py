@@ -27,7 +27,7 @@ def dict2numpy(data) -> np.ndarray:
 
     """
     data_ = {str(k): v for k, v in data.items()}
-    return np.asarray(list(x for _, x in sorted(data_.items())))
+    return np.asarray([x for _, x in sorted(data_.items())])
 
 
 def numpy2dict(data: np.ndarray) -> dict:
@@ -51,4 +51,4 @@ def numpy2dict(data: np.ndarray) -> dict:
     {0: 1.0, 1: 2.0, 2: 3.0}
 
     """
-    return {k: v for k, v in enumerate(data)}
+    return dict(enumerate(data))

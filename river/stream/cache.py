@@ -104,9 +104,8 @@ class Cache:
     def __call__(self, stream, key=None):
 
         # Try to guess a key from the stream object
-        if key is None:
-            if inspect.isfunction(stream):
-                key = stream.__name__
+        if key is None and inspect.isfunction(stream):
+            key = stream.__name__
 
         if key is None:
             raise ValueError(

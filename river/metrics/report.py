@@ -133,7 +133,7 @@ class ClassificationReport(base.MultiClassMetric):
 
         # Write down the accuracy
         width = len(table.splitlines()[0])
-        accuracy = f"{self._accuracy.get():.{self.decimals - 2}%}" + " accuracy"
+        accuracy = f"{self._accuracy.get():.{self.decimals - 2}%} accuracy"
         table += "\n\n" + f"{accuracy:^{width}}"
 
         return table

@@ -124,8 +124,7 @@ class BaseForest(base.EnsembleMixin):
         if self.max_features <= 0:
             self.max_features = 1
         # max_features > n, then use n
-        if self.max_features > n_features:
-            self.max_features = n_features
+        self.max_features = min(self.max_features, n_features)
 
     def reset(self):
         """Reset the forest."""
@@ -180,11 +179,7 @@ class BaseTreeClassifier(tree.HoeffdingTreeClassifier):
         if initial_stats is None:
             initial_stats = {}
 
-        if parent is None:
-            depth = 0
-        else:
-            depth = parent.depth + 1
-
+        depth = 0 if parent is None else parent.depth + 1
         # Generate a random seed for the new learning node
         seed = self._rng.randint(0, 4294967295, dtype="u8")
 
@@ -252,17 +247,13 @@ class BaseTreeRegressor(tree.HoeffdingTreeRegressor):
         self.seed = seed
         self._rng = check_random_state(self.seed)
 
-    def _new_learning_node(self, initial_stats=None, parent=None):  # noqa
+    def _new_learning_node(self, initial_stats=None, parent=None):    # noqa
         """Create a new learning node.
 
         The type of learning node depends on the tree configuration.
         """
 
-        if parent is not None:
-            depth = parent.depth + 1
-        else:
-            depth = 0
-
+        depth = parent.depth + 1 if parent is not None else 0
         # Generate a random seed for the new learning node
         seed = self._rng.randint(0, 4294967295, dtype="u8")
 
@@ -974,7 +965,7 @@ class ForestMemberClassifier(BaseForestMember, base.Classifier):
     def _drift_detector_input(
         self, y_true: base.typing.ClfTarget, y_pred: base.typing.ClfTarget
     ):
-        return int(not y_true == y_pred)  # Not correctly_classifies
+        return int(y_true != y_pred)
 
     def predict_one(self, x):
         return self.model.predict_one(x)

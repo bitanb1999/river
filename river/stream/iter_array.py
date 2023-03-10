@@ -67,12 +67,11 @@ def iter_array(
         X = X[order]
         y = y if y is None else y[order]
 
-    if multioutput:
+    for xi, yi in itertools.zip_longest(X, y if hasattr(y, "__iter__") else []):
+        if multioutput:
 
-        for xi, yi in itertools.zip_longest(X, y if hasattr(y, "__iter__") else []):
             yield dict(zip(feature_names, xi)), dict(zip(target_names, yi))
 
-    else:
+        else:
 
-        for xi, yi in itertools.zip_longest(X, y if hasattr(y, "__iter__") else []):
             yield dict(zip(feature_names, xi)), yi

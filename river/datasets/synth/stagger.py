@@ -101,7 +101,7 @@ class STAGGER(base.SyntheticDataset):
         self.size_labels = {0: "small", 1: "medium", 2: "large"}
         self.color_labels = {0: "red", 1: "blue", 2: "green"}
         self.shape_labels = {0: "circle", 1: "square", 2: "triangle"}
-        self.target_values = [i for i in range(self.n_classes)]
+        self.target_values = list(range(self.n_classes))
 
     def __iter__(self):
         self._rng = check_random_state(self.seed)
@@ -122,14 +122,13 @@ class STAGGER(base.SyntheticDataset):
 
                 if not self.balance_classes:
                     desired_class_found = True
-                else:
-                    if (self.next_class_should_be_zero and (y == 0)) or (
+                elif (self.next_class_should_be_zero and (y == 0)) or (
                         (not self.next_class_should_be_zero) and (y == 1)
                     ):
-                        desired_class_found = True
-                        self.next_class_should_be_zero = (
-                            not self.next_class_should_be_zero
-                        )
+                    desired_class_found = True
+                    self.next_class_should_be_zero = (
+                        not self.next_class_should_be_zero
+                    )
 
             x = {"size": size, "color": color, "shape": shape}
 
@@ -155,4 +154,4 @@ class STAGGER(base.SyntheticDataset):
     @staticmethod
     def _classification_function_two(size, color, shape):
         # Class label 1 if the size is medium or large.
-        return 1 if (size == 1 or size == 2) else 0
+        return 1 if size in [1, 2] else 0

@@ -63,7 +63,7 @@ class HellingerDistanceCriterion(SplitCriterion):
     @staticmethod
     def range_of_merit(pre_split_dist):
         num_classes = len(pre_split_dist)
-        num_classes = num_classes if num_classes > 2 else 2
+        num_classes = max(num_classes, 2)
         return math.log2(num_classes)
 
     @staticmethod
@@ -73,8 +73,4 @@ class HellingerDistanceCriterion(SplitCriterion):
         for i in range(len(dist_sums)):
             dist_sums[i] = sum(distributions[i].values())
             total_weight += dist_sums[i]
-        num_greater = 0
-        for d in dist_sums:
-            if (d / total_weight) > min_frac:
-                num_greater += 1
-        return num_greater
+        return sum(d / total_weight > min_frac for d in dist_sums)

@@ -93,12 +93,9 @@ class GD43(base.InternalMetric):
 
         distance = math.sqrt(utils.math.minkowski_distance(centers[y_pred], x, 2))
 
-        if y_pred in self._avg_cp_by_clusters:
-            self._avg_cp_by_clusters[y_pred].update(distance, w=sample_weight)
-        else:
+        if y_pred not in self._avg_cp_by_clusters:
             self._avg_cp_by_clusters[y_pred] = stats.Mean()
-            self._avg_cp_by_clusters[y_pred].update(distance, w=sample_weight)
-
+        self._avg_cp_by_clusters[y_pred].update(distance, w=sample_weight)
         return self
 
     def revert(self, x, y_pred, centers, sample_weight=1.0):

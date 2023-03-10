@@ -130,9 +130,11 @@ class HoeffdingTree(ABC):
         """Collect metrics corresponding to the current status of the tree
         in a string buffer.
         """
-        measurements = {
+        return {
             "Tree size (nodes)": (
-                self._n_decision_nodes + self._n_active_leaves + self._n_inactive_leaves
+                self._n_decision_nodes
+                + self._n_active_leaves
+                + self._n_inactive_leaves
             ),
             "Tree size (leaves)": self._n_active_leaves + self._n_inactive_leaves,
             "Active learning nodes": self._n_active_leaves,
@@ -141,7 +143,6 @@ class HoeffdingTree(ABC):
             "Inactive leaf byte size estimate": self._inactive_leaf_size_estimate,
             "Byte size estimate overhead": self._size_estimate_overhead_fraction,
         }
-        return measurements
 
     def model_description(self):
         """Walk the tree and return its structure in a buffer.
@@ -153,11 +154,8 @@ class HoeffdingTree(ABC):
         """
         if self._tree_root is not None:
             buffer = [""]
-            description = ""
             self._tree_root.describe_subtree(self, buffer, 0)
-            for line in range(len(buffer)):
-                description += buffer[line]
-            return description
+            return "".join(buffer)
 
     def _new_split_node(
         self,
@@ -229,10 +227,11 @@ class HoeffdingTree(ABC):
             self._active_leaf_size_estimate
             + self._n_inactive_leaves * self._inactive_leaf_size_estimate
         )
-        if self._n_inactive_leaves > 0 or tree_size > self._max_byte_size:
-            if self.stop_mem_management:
-                self._growth_allowed = False
-                return
+        if (
+            self._n_inactive_leaves > 0 or tree_size > self._max_byte_size
+        ) and self.stop_mem_management:
+            self._growth_allowed = False
+            return
         learning_nodes = self._find_learning_nodes()
         learning_nodes.sort(key=lambda n: n.node.calculate_promise())
         max_active = 0
@@ -376,19 +375,17 @@ class HoeffdingTree(ABC):
                 if isinstance(self, base.Classifier):
                     class_val = max(pred, key=pred.get)
                     _print(f"Class {class_val} | {pred}")
-                else:
-                    # Multi-target regression case
-                    if isinstance(self, base.MultiOutputMixin):
-                        _print("Predictions:\n{")
-                        for i, (t, var) in enumerate(pred.items()):
-                            _print(
-                                f"\t{t}: {pred[t]} | {repr(node.stats[t].mean)} | {repr(node.stats[t])}"
-                            )
-                        _print("}")
-                    else:  # Single-target regression
+                elif isinstance(self, base.MultiOutputMixin):
+                    _print("Predictions:\n{")
+                    for t, var in pred.items():
                         _print(
-                            f"Prediction {pred} | {repr(node.stats.mean)} | {repr(node.stats)}"
+                            f"\t{t}: {pred[t]} | {repr(node.stats[t].mean)} | {repr(node.stats[t])}"
                         )
+                    _print("}")
+                else:  # Single-target regression
+                    _print(
+                        f"Prediction {pred} | {repr(node.stats.mean)} | {repr(node.stats)}"
+                    )
                 break
             else:
                 child_index = node.split_test.branch_for_instance(x)  # noqa
@@ -404,17 +401,15 @@ class HoeffdingTree(ABC):
                         class_val = max(pred, key=pred.get)
                         pred = normalize_values_in_dict(pred, inplace=False)
                         _print(f"Class {class_val} | {pred}")
-                    else:
-                        # Multi-target regression case
-                        if isinstance(self, base.MultiOutputMixin):
-                            _print("Predictions:\n{")
-                            for i, (t, var) in enumerate(pred.items()):
-                                _print(f"\t{t}: {pred[t].mean.get()} | {pred[t]}")
-                            _print("}")
-                        else:  # Single-target regression
-                            _print(
-                                f"Prediction {pred} | {repr(node.stats.mean)} | {repr(node.stats)}"
-                            )
+                    elif isinstance(self, base.MultiOutputMixin):
+                        _print("Predictions:\n{")
+                        for t, var in pred.items():
+                            _print(f"\t{t}: {pred[t].mean.get()} | {pred[t]}")
+                        _print("}")
+                    else:  # Single-target regression
+                        _print(
+                            f"Prediction {pred} | {repr(node.stats.mean)} | {repr(node.stats)}"
+                        )
 
         return buffer.getvalue()
 
@@ -473,7 +468,6 @@ class HoeffdingTree(ABC):
                     text = f"{text}\n{probas}"
                 return text
             elif isinstance(self, base.Regressor):
-                # Multi-target regression
                 if isinstance(self, base.MultiOutputMixin):
                     return " | ".join(
                         [
@@ -481,9 +475,8 @@ class HoeffdingTree(ABC):
                             for t, s in node.stats.items()
                         ]
                     )
-                else:  # vanilla single-target regression
-                    pred = node.stats.mean.get()
-                    return f"{round_sig_fig(pred)}"
+                pred = node.stats.mean.get()
+                return f"{round_sig_fig(pred)}"
 
         if max_depth is None:
             max_depth = math.inf
@@ -500,11 +493,7 @@ class HoeffdingTree(ABC):
             edge_attr={"penwidth": "0.6", "center": "true", "fontsize": "7  "},
         )
 
-        if isinstance(self, base.Classifier):
-            n_colors = len(self.classes)  # noqa
-        else:
-            n_colors = 1
-
+        n_colors = len(self.classes) if isinstance(self, base.Classifier) else 1
         # Pick a color palette which maps classes to colors
         new_color = functools.partial(next, iter(_color_brew(n_colors)))
         palette = collections.defaultdict(new_color)
@@ -579,7 +568,7 @@ def _color_brew(n: int) -> typing.List[typing.Tuple[int, int, int]]:
     c = s * v
     m = v - c
 
-    for h in [i for i in range(25, 385, int(360 / n))]:
+    for h in list(range(25, 385, 360 // n)):
 
         # Calculate some intermediate values
         h_bar = h / 60.0
@@ -609,5 +598,5 @@ def _color_brew(n: int) -> typing.List[typing.Tuple[int, int, int]]:
 def transparency_hex(color: typing.Tuple[int, int, int], alpha: float) -> str:
     """Apply alpha coefficient on hexadecimal color."""
     return "#%02x%02x%02x" % tuple(
-        [int(round(alpha * c + (1 - alpha) * 255, 0)) for c in color]
+        int(round(alpha * c + (1 - alpha) * 255, 0)) for c in color
     )

@@ -8,9 +8,7 @@ class BinaryBranch(Branch):
         self.__dict__.update(kwargs)
 
     def next(self, x):
-        if x < self.threshold:
-            return self.children[0]
-        return self.children[1]
+        return self.children[0] if x < self.threshold else self.children[1]
 
 
 def test_size():

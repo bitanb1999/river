@@ -43,21 +43,21 @@ def print_table(
     if order is None:
         order = list(range(len(columns[0])))
 
-    # Build the table
-    table = (
+    return (
         row_format.format(*headers)
         + "\n"
         + "\n".join(
             (
                 row_format.format(
-                    *[col[i].rjust(width) for col, width in zip(columns, col_widths)]
+                    *[
+                        col[i].rjust(width)
+                        for col, width in zip(columns, col_widths)
+                    ]
                 )
                 for i in order
             )
         )
     )
-
-    return table
 
 
 def humanize_bytes(n_bytes: int):
@@ -76,4 +76,4 @@ def humanize_bytes(n_bytes: int):
         rank = min(rank, len(suffixes) - 1)
         human = n_bytes / (1024.0 ** rank)
     f = ("%.2f" % human).rstrip("0").rstrip(".")
-    return "%s %s" % (f, suffixes[rank])
+    return f"{f} {suffixes[rank]}"

@@ -75,7 +75,7 @@ class RandomRBF(base.SyntheticDataset):
         self.n_centroids = n_centroids
         self.centroids = None
         self.centroid_weights = None
-        self.target_values = [i for i in range(self.n_classes)]
+        self.target_values = list(range(self.n_classes))
 
     def __iter__(self):
         self._generate_centroids()
@@ -88,7 +88,7 @@ class RandomRBF(base.SyntheticDataset):
     def _generate_sample(self, rng_sample: np.random.RandomState):
         idx = random_index_based_on_weights(self.centroid_weights, rng_sample)
         current_centroid = self.centroids[idx]
-        att_vals = dict()
+        att_vals = {}
         magnitude = 0.0
         for i in range(self.n_features):
             att_vals[i] = (rng_sample.rand() * 2.0) - 1.0
@@ -115,9 +115,7 @@ class RandomRBF(base.SyntheticDataset):
         self.centroid_weights = []
         for i in range(self.n_centroids):
             self.centroids.append(Centroid())
-            rand_centre = []
-            for j in range(self.n_num_features):
-                rand_centre.append(rng_model.rand())
+            rand_centre = [rng_model.rand() for _ in range(self.n_num_features)]
             self.centroids[i].centre = rand_centre
             self.centroids[i].class_label = rng_model.randint(self.n_classes)
             self.centroids[i].std_dev = rng_model.rand()
@@ -243,7 +241,7 @@ class RandomRBFDrift(RandomRBF):
         rng_model = check_random_state(self.seed_model)
         self.centroid_speed = []
 
-        for i in range(self.n_drift_centroids):
+        for _ in range(self.n_drift_centroids):
             rand_speed = np.zeros(self.n_features)
             norm_speed = 0.0
 

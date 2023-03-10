@@ -74,9 +74,7 @@ class Dataset(abc.ABC):
 
         """
 
-        content = {}
-        content["Name"] = self.__class__.__name__
-        content["Task"] = self.task
+        content = {"Name": self.__class__.__name__, "Task": self.task}
         if isinstance(self, SyntheticDataset) and self.n_samples is None:
             content["Samples"] = "∞"
         elif self.n_samples:
@@ -97,7 +95,7 @@ class Dataset(abc.ABC):
         r_len = max(map(len, self._repr_content.values()))
 
         out = f"{self.desc}\n\n" + "\n".join(
-            k.rjust(l_len) + "  " + v.ljust(r_len)
+            f"{k.rjust(l_len)}  {v.ljust(r_len)}"
             for k, v in self._repr_content.items()
         )
 
@@ -121,20 +119,18 @@ class SyntheticDataset(Dataset):
         l_len_config = max(map(len, params.keys()))
         r_len_config = max(map(len, map(str, params.values())))
 
-        out = (
+        return (
             "Synthetic data generator\n\n"
             + "\n".join(
-                k.rjust(l_len_prop) + "  " + v.ljust(r_len_prop)
+                f"{k.rjust(l_len_prop)}  {v.ljust(r_len_prop)}"
                 for k, v in self._repr_content.items()
             )
             + "\n\nConfiguration\n-------------\n"
             + "\n".join(
-                k.rjust(l_len_config) + "  " + str(v).ljust(r_len_config)
+                f"{k.rjust(l_len_config)}  {str(v).ljust(r_len_config)}"
                 for k, v in params.items()
             )
         )
-
-        return out
 
     def _get_params(self) -> typing.Dict[str, typing.Any]:
         """Return the parameters that were used during initialization."""

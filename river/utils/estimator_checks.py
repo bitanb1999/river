@@ -252,13 +252,14 @@ def seed_params(params, seed):
     if is_class_param(params):
         return params[0], seed_params(params[1], seed)
 
-    if not isinstance(params, dict):
-        return params
-
-    return {
-        name: seed if name == "seed" else seed_params(param, seed)
-        for name, param in params.items()
-    }
+    return (
+        {
+            name: seed if name == "seed" else seed_params(param, seed)
+            for name, param in params.items()
+        }
+        if isinstance(params, dict)
+        else params
+    )
 
 
 def check_seeding_is_idempotent(model, dataset):

@@ -24,8 +24,8 @@ def iter_perturbations(keys, n=10):
     for _ in range(n):
         p = {j: random.gauss(0, 1) for j in keys}
         norm = utils.math.norm(p, order=2)
-        for j in p:
-            p[j] /= norm
+        for value in p.values():
+            value /= norm
         yield p
 
 

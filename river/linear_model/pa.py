@@ -21,15 +21,11 @@ class BasePA:
     @classmethod
     def _calc_tau_0(cls, x, loss):
         norm = utils.math.norm(x, order=2) ** 2
-        if norm > 0:
-            return loss / utils.math.norm(x, order=2) ** 2
-        return 0
+        return loss / utils.math.norm(x, order=2) ** 2 if norm > 0 else 0
 
     def _calc_tau_1(self, x, loss):
         norm = utils.math.norm(x, order=2) ** 2
-        if norm > 0:
-            return min(self.C, loss / norm)
-        return 0
+        return min(self.C, loss / norm) if norm > 0 else 0
 
     def _calc_tau_2(self, x, loss):
         return loss / (utils.math.norm(x, order=2) ** 2 + 0.5 / self.C)

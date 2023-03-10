@@ -93,9 +93,9 @@ class Sine(base.SyntheticDataset):
         has_noise: bool = False,
     ):
         super().__init__(
-            n_features=self._N_BASE_FEATURES
-            if not has_noise
-            else self._N_FEATURES_INCLUDING_NOISE,
+            n_features=self._N_FEATURES_INCLUDING_NOISE
+            if has_noise
+            else self._N_BASE_FEATURES,
             n_classes=2,
             n_outputs=1,
             task=base.BINARY_CLF,
@@ -119,14 +119,14 @@ class Sine(base.SyntheticDataset):
         self.balance_classes = balance_classes
         self._rng = None  # This is the actual random_state object used internally
         self.next_class_should_be_zero = False
-        self.target_values = [i for i in range(self.n_classes)]
+        self.target_values = list(range(self.n_classes))
 
     def __iter__(self):
         self._rng = check_random_state(self.seed)
         self.next_class_should_be_zero = False
 
         while True:
-            x = dict()
+            x = {}
             y = 0
             desired_class_found = False
             while not desired_class_found:
@@ -136,14 +136,13 @@ class Sine(base.SyntheticDataset):
 
                 if not self.balance_classes:
                     desired_class_found = True
-                else:
-                    if (self.next_class_should_be_zero and (y == 0)) or (
+                elif (self.next_class_should_be_zero and (y == 0)) or (
                         (not self.next_class_should_be_zero) and (y == 1)
                     ):
-                        desired_class_found = True
-                        self.next_class_should_be_zero = (
-                            not self.next_class_should_be_zero
-                        )
+                    desired_class_found = True
+                    self.next_class_should_be_zero = (
+                        not self.next_class_should_be_zero
+                    )
 
             if self.has_noise:
                 x[2] = self._rng.rand()

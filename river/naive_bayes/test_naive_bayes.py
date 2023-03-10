@@ -42,10 +42,7 @@ def yield_batch_unseen_data():
     yield from [pd.Series(x) for x in yield_unseen_data()]
 
 
-@pytest.mark.parametrize(
-    "inc_model, batch_model, bag, sk_model",
-    [
-        pytest.param(
+@pytest.mark.parametrize("inc_model, batch_model, bag, sk_model", [pytest.param(
             compose.Pipeline(
                 ("tokenize", feature_extraction.BagOfWords(lowercase=False)),
                 ("model", model(alpha=alpha)),
@@ -57,15 +54,11 @@ def yield_batch_unseen_data():
             feature_extraction.BagOfWords(lowercase=False),
             sk_model(alpha=alpha),
             id=f"{model.__name__} - {alpha}",
-        )
-        for model, sk_model in [
+        ) for model, sk_model in [
             (naive_bayes.MultinomialNB, sk_naive_bayes.MultinomialNB),
             (naive_bayes.BernoulliNB, sk_naive_bayes.BernoulliNB),
             (naive_bayes.ComplementNB, sk_naive_bayes.ComplementNB),
-        ]
-        for alpha in [alpha for alpha in range(1, 4)]
-    ],
-)
+        ] for alpha in list(range(1, 4))])
 def test_inc_vs_batch(inc_model, batch_model, bag, sk_model):
     """
     Assert incremental models give the same results as batch models.
@@ -97,8 +90,8 @@ def test_inc_vs_batch(inc_model, batch_model, bag, sk_model):
     assert inc_model["model"].p_class("yes") == batch_model["model"].p_class("yes")
     assert inc_model["model"].p_class("no") == batch_model["model"].p_class("no")
 
-    if isinstance(sk_model, sk_naive_bayes.BernoulliNB) or isinstance(
-        sk_model, sk_naive_bayes.MultinomialNB
+    if isinstance(
+        sk_model, (sk_naive_bayes.BernoulliNB, sk_naive_bayes.MultinomialNB)
     ):
 
         inc_cp = inc_model["model"].p_feature_given_class
@@ -115,8 +108,8 @@ def test_inc_vs_batch(inc_model, batch_model, bag, sk_model):
     assert inc_model["model"].class_counts == batch_model["model"].class_counts
     assert inc_model["model"].feature_counts == batch_model["model"].feature_counts
 
-    if isinstance(sk_model, sk_naive_bayes.ComplementNB) or isinstance(
-        sk_model, sk_naive_bayes.MultinomialNB
+    if isinstance(
+        sk_model, (sk_naive_bayes.ComplementNB, sk_naive_bayes.MultinomialNB)
     ):
         assert inc_model["model"].class_totals == batch_model["model"].class_totals
 
@@ -140,9 +133,7 @@ def test_inc_vs_batch(inc_model, batch_model, bag, sk_model):
         inc_model.predict_proba_many(X).values,
     ):
         for sk_pred, river_pred in zip(sk_preds, river_preds):
-            assert river_pred == pytest.approx(
-                1 - sk_pred
-            ) or river_pred == pytest.approx(sk_pred)
+            assert river_pred in [pytest.approx(     1 - sk_pred ), pytest.approx(sk_pred)]
 
     # Assert river produce same results as sklearn using dense dataframe:
     for sk_preds, river_preds in zip(
@@ -152,13 +143,11 @@ def test_inc_vs_batch(inc_model, batch_model, bag, sk_model):
         .values,
     ):
         for sk_pred, river_pred in zip(sk_preds, river_preds):
-            assert river_pred == pytest.approx(
-                1 - sk_pred
-            ) or river_pred == pytest.approx(sk_pred)
+            assert river_pred in [pytest.approx(     1 - sk_pred ), pytest.approx(sk_pred)]
 
     # Test class methods
-    if isinstance(sk_model, sk_naive_bayes.ComplementNB) or isinstance(
-        sk_model, sk_naive_bayes.MultinomialNB
+    if isinstance(
+        sk_model, (sk_naive_bayes.ComplementNB, sk_naive_bayes.MultinomialNB)
     ):
         assert inc_model["model"]._more_tags() == {"positive input"}
 

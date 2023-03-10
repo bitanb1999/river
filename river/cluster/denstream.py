@@ -191,51 +191,46 @@ class DenStream(base.Clusterer):
                 self.p_micro_clusters[closest_pmc_index].add(mc_from_p)
                 merged_status = True
 
-        if not merged_status:
-            if len(self.o_micro_clusters) != 0:
-                closest_omc_index = self._find_closest_cluster_index(
-                    point, self.o_micro_clusters
-                )
-                new_omc = self.o_micro_clusters[closest_omc_index]
-                new_omc.add(mc_from_p)
-                if new_omc.radius <= self.radius:
-                    # merge p into nearest c_0
-                    self.o_micro_clusters[closest_omc_index].add(mc_from_p)
-                    if (
-                        self.o_micro_clusters[closest_omc_index].weight
-                        > self.tolerance_factor * self.core_weight_threshold
-                    ):
-                        # remove c_o from outlier-buffer
-                        self.o_micro_clusters.pop(closest_omc_index)
-                        # add a new p_micro_cluster by c_o
-                        self.p_micro_clusters[len(self.p_micro_clusters)] = new_omc
-                else:
-                    # create a new o-micro-cluster by p and add it to o_micro_clusters
-                    self.o_micro_clusters[len(self.o_micro_clusters)] = mc_from_p
+        if not merged_status and len(self.o_micro_clusters) != 0:
+            closest_omc_index = self._find_closest_cluster_index(
+                point, self.o_micro_clusters
+            )
+            new_omc = self.o_micro_clusters[closest_omc_index]
+            new_omc.add(mc_from_p)
+            if new_omc.radius <= self.radius:
+                # merge p into nearest c_0
+                self.o_micro_clusters[closest_omc_index].add(mc_from_p)
+                if (
+                    self.o_micro_clusters[closest_omc_index].weight
+                    > self.tolerance_factor * self.core_weight_threshold
+                ):
+                    # remove c_o from outlier-buffer
+                    self.o_micro_clusters.pop(closest_omc_index)
+                    # add a new p_micro_cluster by c_o
+                    self.p_micro_clusters[len(self.p_micro_clusters)] = new_omc
+            else:
+                # create a new o-micro-cluster by p and add it to o_micro_clusters
+                self.o_micro_clusters[len(self.o_micro_clusters)] = mc_from_p
 
     def _is_directly_density_reachable(self, c_p, c_q):
         # if c_p is directly reachable from c_q, weight of c_q > mu, and vice versa.
         # for two clusters to be connected, they have to be density reachable from a third cluster. hence check
         # check weight of two clusters
-        if (
-            c_p.weight > self.core_weight_threshold
-            and c_q.weight > self.core_weight_threshold
-        ):
-            # check distance of two clusters and compare with 2*eps
-            if self._distance(c_p.center, c_q.center) < 2 * self.radius:
-                # further check that the distance is smaller than sum of radius
-                if self._distance(c_p.center, c_q.center) < c_p.radius + c_q.radius:
-                    return True
-        return False
+        return (
+            (
+                c_p.weight > self.core_weight_threshold
+                and c_q.weight > self.core_weight_threshold
+            )
+            and self._distance(c_p.center, c_q.center) < 2 * self.radius
+            and self._distance(c_p.center, c_q.center) < c_p.radius + c_q.radius
+        )
 
     def _query_neighbor(self, cluster):
-        neighbors = {}
-        # scan all clusters within self.p_micro_clusters
-        for pmc in self.p_micro_clusters.values():
-            # check density reachable and check that the cluster itself does not appear in neighbors
-            if self._is_directly_density_reachable(cluster, pmc) and cluster != pmc:
-                neighbors[pmc] = None
-        return neighbors
+        return {
+            pmc: None
+            for pmc in self.p_micro_clusters.values()
+            if self._is_directly_density_reachable(cluster, pmc) and cluster != pmc
+        }
 
     @staticmethod
     def _generate_clusters_from_labels(cluster_labels):
@@ -397,41 +392,36 @@ class DenStreamMicroCluster(metaclass=ABCMeta):
 
     @property
     def weighted_linear_sum(self):
-        weighted_linear_sum = {
+        return {
             i: (2 ** (-self.current_time * self.decaying_factor)) * self.IWLS[i]
             for i in range(self.dim)
         }
-        return weighted_linear_sum
 
     @property
     def weighted_squared_sum(self):
-        weighted_squared_sum = {
+        return {
             i: (2 ** (-self.current_time * self.decaying_factor)) * self.IWSS[i]
             for i in range(self.dim)
         }
-        return weighted_squared_sum
 
     @property
     def weight(self):
-        weight = (
+        return (
             2 ** (-self.current_time * self.decaying_factor)
         ) * self.initial_weight
-        return weight
 
     @property
     def center(self):
-        center = {i: self.weighted_linear_sum[i] / self.weight for i in range(self.dim)}
-        return center
+        return {i: self.weighted_linear_sum[i] / self.weight for i in range(self.dim)}
 
     @property
     def radius(self):
-        radius = math.sqrt(
+        return math.sqrt(
             abs(
                 self.norm(self.weighted_squared_sum) / self.weight
                 - (self.norm(self.weighted_linear_sum) / self.weight) ** 2
             )
         )
-        return radius
 
     def add(self, cluster):
         assert self.dim == cluster.dim
@@ -442,12 +432,9 @@ class DenStreamMicroCluster(metaclass=ABCMeta):
             self.SS[i] += cluster.SS[i]
             self.IWLS[i] += cluster.IWLS[i]
             self.IWSS[i] += cluster.IWSS[i]
-        if self.creation_time > cluster.creation_time:
-            self.creation_time = cluster.creation_time
+        self.creation_time = min(self.creation_time, cluster.creation_time)
 
     @staticmethod
     def norm(x):
-        norm = 0
-        for val in x.values():
-            norm += val * val
+        norm = sum(val * val for val in x.values())
         return math.sqrt(norm)

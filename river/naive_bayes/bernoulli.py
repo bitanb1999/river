@@ -333,7 +333,7 @@ class BernoulliNB(base.BaseNB):
 
             else:
 
-                counts = {c: {f: count for f, count in zip(columns, fc[i])}}
+                counts = {c: dict(zip(columns, fc[i]))}
 
             # Transform {classe_i: {token_1: f_1, ... token_n: f_n}} into:
             # [{token_1: {classe_i: f_1}},.. {token_n: {class_i: f_n}}]

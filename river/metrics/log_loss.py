@@ -41,6 +41,4 @@ class LogLoss(base.MeanMetric, base.BinaryMetric):
     def _eval(self, y_true, y_pred):
         p_true = y_pred.get(True, 0.0) if isinstance(y_pred, dict) else y_pred
         p_true = self._clamp_proba(p_true)
-        if y_true:
-            return -math.log(p_true)
-        return -math.log(1 - p_true)
+        return -math.log(p_true) if y_true else -math.log(1 - p_true)

@@ -133,11 +133,11 @@ class SRPClassifier(base.WrapperMixin, base.EnsembleMixin, base.Classifier):
         if warning_detector is None:
             warning_detector = ADWIN(delta=1e-4)
 
-        if disable_detector == "off":
-            pass
-        elif disable_detector == "drift":
+        if disable_detector == "drift":
             drift_detector = None
             warning_detector = None
+        elif disable_detector == "off":
+            pass
         elif disable_detector == "warning":
             warning_detector = None
         else:
@@ -161,7 +161,7 @@ class SRPClassifier(base.WrapperMixin, base.EnsembleMixin, base.Classifier):
         self.warning_detector = warning_detector
         self.disable_weighted_vote = disable_weighted_vote
         self.metric = metric
-        self.nominal_attributes = nominal_attributes if nominal_attributes else []
+        self.nominal_attributes = nominal_attributes or []
         self.seed = seed
         self._rng = np.random.default_rng(self.seed)
 
@@ -190,11 +190,7 @@ class SRPClassifier(base.WrapperMixin, base.EnsembleMixin, base.Classifier):
         for model in self.models:
             # Get prediction for instance
             y_pred = model.predict_proba_one(x)
-            if y_pred:
-                y_pred = max(y_pred, key=y_pred.get)
-            else:
-                y_pred = None  # Model is empty
-
+            y_pred = max(y_pred, key=y_pred.get) if y_pred else None
             # Update performance evaluator
             model.metric.update(y_true=y, y_pred=y_pred)
 
@@ -319,10 +315,10 @@ class SRPClassifier(base.WrapperMixin, base.EnsembleMixin, base.Classifier):
         subspace_indexes = np.arange(
             self.n_models
         )  # For matching subspaces with ensemble members
-        if (
-            self.training_method == self._TRAIN_RANDOM_PATCHES
-            or self.training_method == self._TRAIN_RANDOM_SUBSPACES
-        ):
+        if self.training_method in [
+            self._TRAIN_RANDOM_PATCHES,
+            self._TRAIN_RANDOM_SUBSPACES,
+        ]:
             # Shuffle indexes
             self._rng.shuffle(subspace_indexes)
 
@@ -423,7 +419,7 @@ class StreamingRandomPatchesBaseLearner:
         n_samples_seen: int,
         rng: np.random.Generator,
     ):
-        all_features = [feature for feature in x.keys()]
+        all_features = list(x.keys())
         if self.features is not None:
             # Select the subset of features to use
             x_subset = {k: x[k] for k in self.features}

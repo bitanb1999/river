@@ -159,9 +159,7 @@ class Absolute(RegressionLoss):
         if isinstance(y_true, np.ndarray):
             return np.where(y_pred > y_true, 1, -1)
 
-        if y_pred > y_true:
-            return 1
-        return -1
+        return 1 if y_pred > y_true else -1
 
 
 class Cauchy(RegressionLoss):
@@ -242,14 +240,11 @@ class CrossEntropy(MultiClassLoss):
         self.class_weight = class_weight
 
     def __call__(self, y_true, y_pred):
-        total = 0
-
-        for label, proba in y_pred.items():
-            if y_true == label:
-                total += self.class_weight.get(label, 1.0) * math.log(
-                    clamp_proba(proba)
-                )
-
+        total = sum(
+            self.class_weight.get(label, 1.0) * math.log(clamp_proba(proba))
+            for label, proba in y_pred.items()
+            if y_true == label
+        )
         return -total
 
     def gradient(self, y_true, y_pred):
@@ -317,9 +312,7 @@ class Hinge(BinaryLoss):
         if isinstance(y_true, np.ndarray):
             return np.where(y_true * y_pred < self.threshold, -y_true, 0)
 
-        if y_true * y_pred <= self.threshold:
-            return -y_true
-        return 0
+        return -y_true if y_true * y_pred <= self.threshold else 0
 
 
 class EpsilonInsensitiveHinge(RegressionLoss):
@@ -397,9 +390,7 @@ class Log(BinaryLoss):
         z = y_pred * y_true
         if z > 18.0:
             return weight * math.exp(-z)
-        if z < -18.0:
-            return weight * -z
-        return weight * math.log(1.0 + math.exp(-z))
+        return weight * -z if z < -18.0 else weight * math.log(1.0 + math.exp(-z))
 
     def gradient(self, y_true, y_pred):
 
@@ -575,6 +566,4 @@ class Poisson(RegressionLoss):
         return math.exp(y_pred) - y_true
 
     def mean_func(self, y_pred):
-        if isinstance(y_pred, np.ndarray):
-            return np.exp(y_pred)
-        return math.exp(y_pred)
+        return np.exp(y_pred) if isinstance(y_pred, np.ndarray) else math.exp(y_pred)

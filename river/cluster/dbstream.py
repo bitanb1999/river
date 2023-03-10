@@ -157,20 +157,19 @@ class DBSTREAM(base.Clusterer):
         return math.sqrt(utils.math.minkowski_distance(point_a, point_b, 2))
 
     def _find_fixed_radius_nn(self, x):
-        fixed_radius_nn = {}
-        for i in self.micro_clusters.keys():
+        return {
+            i: self.micro_clusters[i]
+            for i in self.micro_clusters.keys()
             if (
                 self._distance(self.micro_clusters[i].center, x)
                 < self.clustering_threshold
-            ):
-                fixed_radius_nn[i] = self.micro_clusters[i]
-        return fixed_radius_nn
+            )
+        }
 
     def _gaussian_neighborhood(self, point_a, point_b):
         distance = self._distance(point_a, point_b)
         sigma = self.clustering_threshold / 3
-        gaussian_neighborhood = math.exp(-(distance * distance) / (2 * (sigma * sigma)))
-        return gaussian_neighborhood
+        return math.exp(-(distance * distance) / (2 * (sigma * sigma)))
 
     def _update(self, x):
         # Algorithm 1 of Michael Hahsler and Matthew Bolanos
@@ -229,17 +228,16 @@ class DBSTREAM(base.Clusterer):
             # prevent collapsing clusters
             for i in neighbor_clusters.keys():
                 for j in neighbor_clusters.keys():
-                    if j > i:
-                        if (
-                            self._distance(
-                                self.micro_clusters[i].center,
-                                self.micro_clusters[j].center,
-                            )
-                            < self.clustering_threshold
-                        ):
-                            # revert centers of mc_i and mc_j to previous positions
-                            self.micro_clusters[i].center = current_centers[i]
-                            self.micro_clusters[j].center = current_centers[j]
+                    if j > i and (
+                        self._distance(
+                            self.micro_clusters[i].center,
+                            self.micro_clusters[j].center,
+                        )
+                        < self.clustering_threshold
+                    ):
+                        # revert centers of mc_i and mc_j to previous positions
+                        self.micro_clusters[i].center = current_centers[i]
+                        self.micro_clusters[j].center = current_centers[j]
 
         self.time_stamp += 1
 
@@ -308,7 +306,7 @@ class DBSTREAM(base.Clusterer):
         # cluster counter; in this algorithm, cluster labels starts with 0
         count = -1
 
-        for index in labels.keys():
+        for index in labels:
             if labels[index] is not None:
                 continue
             count += 1

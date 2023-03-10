@@ -143,10 +143,7 @@ class LabelCombinationHoeffdingTreeClassifier(
         enc_probas = super().predict_proba_one(x)
         enc_class = max(enc_probas, key=enc_probas.get)
 
-        result = {}
-        for lbl in self._labels:
-            result[lbl] = {False: 0.0, True: 0.0}
-
+        result = {lbl: {False: 0.0, True: 0.0} for lbl in self._labels}
         for label_id, label_val in self._r_label_map[enc_class]:
             result[label_id][label_val] = enc_probas[enc_class]
             result[label_id] = normalize_values_in_dict(result[label_id])
@@ -170,8 +167,7 @@ class LabelCombinationHoeffdingTreeClassifier(
 
         probas = self.predict_proba_one(x)
 
-        preds = {}
-        for label_id, label_probas in probas.items():
-            preds[label_id] = max(label_probas, key=label_probas.get)
-
-        return preds
+        return {
+            label_id: max(label_probas, key=label_probas.get)
+            for label_id, label_probas in probas.items()
+        }

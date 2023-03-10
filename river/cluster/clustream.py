@@ -188,17 +188,18 @@ class CluStream(base.Clusterer):
         )
 
     def _get_micro_clustering_result(self):
-        if not self.initialized:
-            return {}
-        res = {
-            i: CluStreamMicroCluster(
-                micro_cluster=micro_cluster,
-                micro_cluster_r_factor=self.micro_cluster_r_factor,
-                max_micro_clusters=self.max_micro_clusters,
-            )
-            for i, micro_cluster in self.micro_clusters.items()
-        }
-        return res
+        return (
+            {
+                i: CluStreamMicroCluster(
+                    micro_cluster=micro_cluster,
+                    micro_cluster_r_factor=self.micro_cluster_r_factor,
+                    max_micro_clusters=self.max_micro_clusters,
+                )
+                for i, micro_cluster in self.micro_clusters.items()
+            }
+            if self.initialized
+            else {}
+        )
 
     def _get_closest_micro_cluster(self, x, micro_clusters):
         min_distance = math.inf
@@ -280,9 +281,7 @@ class CluStream(base.Clusterer):
         index, _ = self._get_closest_micro_cluster(
             x, self._get_micro_clustering_result()
         )
-        y = kmeans.predict_one(micro_cluster_centers[index])
-
-        return y
+        return kmeans.predict_one(micro_cluster_centers[index])
 
 
 class CluStreamMicroCluster(metaclass=ABCMeta):
@@ -306,11 +305,11 @@ class CluStreamMicroCluster(metaclass=ABCMeta):
             self.n_samples = 1
             self.linear_sum = {}
             self.squared_sum = {}
-            for key in x.keys():
+            for key in x:
                 self.linear_sum[key] = x[key] * sample_weight
                 self.squared_sum[key] = x[key] * x[key] * sample_weight
             self.linear_sum_timestamp = timestamp * sample_weight
-            self.squared_sum_timestamp = timestamp * timestamp * sample_weight
+            self.squared_sum_timestamp = timestamp**2 * sample_weight
         elif micro_cluster is not None:
             # Initialize with micro-cluster
             self.n_samples = micro_cluster.n_samples
@@ -355,9 +354,8 @@ class CluStreamMicroCluster(metaclass=ABCMeta):
             ss_div_n = ss / self.weight
             res[key] = ss_div_n - ls_div_n_squared
 
-            if res[key] <= 0.0:
-                if res[key] > -EPSILON:
-                    res[key] = MIN_VARIANCE
+            if res[key] <= 0.0 and res[key] > -EPSILON:
+                res[key] = MIN_VARIANCE
         return res
 
     @property

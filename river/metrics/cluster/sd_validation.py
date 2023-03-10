@@ -134,16 +134,17 @@ class SD(base.InternalMetric):
         overall_variance = {
             i: self._overall_variance[i].get() for i in self._overall_variance
         }
-        cluster_variance = {}
-        for i in self._cluster_variance:
-            cluster_variance[i] = {
-                j: self._cluster_variance[i][j].get() for j in self._cluster_variance[i]
+        cluster_variance = {
+            i: {
+                j: self._cluster_variance[i][j].get()
+                for j in self._cluster_variance[i]
             }
-
-        scat_nc = 0
-        for i in cluster_variance:
-            scat_nc += self._norm(cluster_variance[i]) / self._norm(overall_variance)
-
+            for i in self._cluster_variance
+        }
+        scat_nc = sum(
+            self._norm(value) / self._norm(overall_variance)
+            for value in cluster_variance.values()
+        )
         try:
             return scat_nc + dispersion_nc
         except ZeroDivisionError:
